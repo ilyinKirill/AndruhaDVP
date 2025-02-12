@@ -4,6 +4,8 @@ global AxisX := 50  ; first member position x
 global AxisY := 360  ; first member position y
 global Name := "AndruhaDVP"
 global IsOn := true
+global MinTimeout := 200 ; Min timeout per click
+global MaxTimeout := 2000 ; Max timeout per click
 
 #IfWinActive ahk_class L2UnrealWWindowsViewportWindow
 F11::
@@ -39,9 +41,10 @@ class Bot{
 	    global IsOn := true
 	    While (global IsOn && !ControlHandler.IsManual()){
     		Send, {Click Right}
-    		Sleep, 100
+            Random, rand, global MinTimeout, global MaxTimeout
+    		Sleep, rand
     		Send, {Click Right}
-    		Sleep, 1000
+    		Sleep, rand
 
 	    }
 	    this.ShowNotification(global Name, "Bot off")

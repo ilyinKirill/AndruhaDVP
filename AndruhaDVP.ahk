@@ -17,6 +17,7 @@ F3::
     SkillPanelHandler.ShortcutAction(3)
 return
 
+#MaxThreadsPerHotkey 1
 F4::
     SkillPanelHandler.PickUpAction()
 return
@@ -124,14 +125,12 @@ class ControlHandler {
 }
 
 class SkillPanelHandler {
-    ActionTimeout := 50
     LoopIterationTimeout := 50
     PickUpHotkey := "4"
     FistPanel := "!1"
     SecondPanel := "!2"
 
     PickUpAction() {
-        Sleep, % this.ActionTimeout
         Send, % this.SecondPanel
         while GetKeyState("F4", "P") {
             Send, % this.PickUpHotkey

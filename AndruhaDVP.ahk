@@ -4,8 +4,43 @@ global AxisX := 50  ; first member position x
 global AxisY := 360  ; first member position y
 global Name := "AndruhaDVP"
 global IsOn := true
+global MinTimeout := 200 ; Min timeout per assist
+global MaxTimeout := 2000 ; Max timeout per assist
+global TimeoutPerClick := 100 ; timeout per click
+
+SkillPanelHandler := new SkillPanelHandler()
 
 #IfWinActive ahk_class L2UnrealWWindowsViewportWindow
+
+F1::
+    SkillPanelHandler.ShortcutAction(1)
+return
+
+F2::
+    SkillPanelHandler.ShortcutAction(2)
+return
+
+F3::
+    SkillPanelHandler.ShortcutAction(3)
+return
+
+F4::
+    SkillPanelHandler.PickUpAction()
+return
+
+F5::
+    SkillPanelHandler.ShortcutAction(5)
+return
+
+F9::
+    MouseGetPos, xpos, ypos
+    ControlHandler.MoveCoursor(global AxisX, global AxisY)
+    Send, {Click Right}
+    Sleep, 50
+    Send, {Click Right}
+    ControlHandler.MoveCoursor(xpos, ypos)
+Return
+
 F11::
 	ControlHandler.MoveCoursor(global AxisX, global AxisY)
 	Bot.BotOn()
@@ -14,15 +49,6 @@ return
 F12::
     Bot.BotOff() ;
 return
-
-F1::
-    MouseGetPos, xpos, ypos
-    ControlHandler.MoveCoursor(global AxisX, global AxisY)
-    Send, {Click Right}
-    Sleep, 50
-    Send, {Click Right}
-    ControlHandler.MoveCoursor(xpos, ypos)
-Return
 
 Up::
     ControlHandler.PreviousPosition()
@@ -38,11 +64,11 @@ class Bot{
 	    this.ShowNotification(global Name, "Bot on")
 	    global IsOn := true
 	    While (global IsOn && !ControlHandler.IsManual()){
+            Random, rand, global MinTimeout, global MaxTimeout
+            Sleep, rand
     		Send, {Click Right}
-    		Sleep, 100
+    		Sleep, global TimeoutPerClick
     		Send, {Click Right}
-    		Sleep, 1000
-
 	    }
 	    this.ShowNotification(global Name, "Bot off")
 	    return
@@ -91,5 +117,24 @@ class ControlHandler{
 		    saveZone := 16
 	    }
 	    return ((currentPos + saveZone) > mousePos && (currentPos - saveZone) < mousePos)
+    }
+}
+
+class SkillPanelHandler{
+
+    PickUpAction() {
+        Send, !2
+        while GetKeyState("F4", "P") {
+            Send, 4
+            Sleep, 50
+        }
+        Send, !1
+        Sleep, 100
+    }
+
+    ShortcutAction(shortcut) {
+        Send, !2
+        Send, %shortcut%
+        Send, !1
     }
 }

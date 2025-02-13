@@ -1,5 +1,5 @@
 #SingleInstance, forse
-;#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
+#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
 
 SkillPanelHandler := new SkillPanelHandler()
 BotHandler := new BotHandler()
@@ -124,20 +124,20 @@ class ControlHandler {
 }
 
 class SkillPanelHandler {
-    ActionTimeout := 100
+    ActionTimeout := 50
     LoopIterationTimeout := 50
     PickUpHotkey := "4"
     FistPanel := "!1"
     SecondPanel := "!2"
 
     PickUpAction() {
+        Sleep, % this.ActionTimeout
         Send, % this.SecondPanel
         while GetKeyState("F4", "P") {
             Send, % this.PickUpHotkey
             Sleep, % this.LoopIterationTimeout
         }
         Send, % this.FistPanel
-        Sleep, % this.ActionTimeout
     }
 
     ShortcutAction(shortcut) {

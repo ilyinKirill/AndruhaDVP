@@ -1,16 +1,9 @@
 #SingleInstance, forse
-
-global AxisX := 50  ; first member position x
-global AxisY := 360  ; first member position y
-global Name := "AndruhaDVP"
-global IsOn := true
-global MinTimeout := 200 ; Min timeout per assist
-global MaxTimeout := 2000 ; Max timeout per assist
-global TimeoutPerClick := 100 ; timeout per click
+;#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
 
 SkillPanelHandler := new SkillPanelHandler()
-
-#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
+BotHandler := new BotHandler()
+ControlHandler := new ControlHandler()
 
 F1::
     SkillPanelHandler.ShortcutAction(1)
@@ -33,21 +26,16 @@ F5::
 return
 
 F9::
-    MouseGetPos, xpos, ypos
-    ControlHandler.MoveCoursor(global AxisX, global AxisY)
-    Send, {Click Right}
-    Sleep, 50
-    Send, {Click Right}
-    ControlHandler.MoveCoursor(xpos, ypos)
+    BotHandler.DoSingleAssist()
 Return
 
 F11::
-	ControlHandler.MoveCoursor(global AxisX, global AxisY)
-	Bot.BotOn()
+	ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
+	BotHander.BotOn()
 return
 
 F12::
-    Bot.BotOff() ;
+    BotHander.BotOff()
 return
 
 Up::
@@ -58,25 +46,41 @@ Down::
     ControlHandler.NextPosition()
 return
 
-class Bot{
+class BotHandler {
+    Name := "AndruhaDVP"
+    IsOn := true
+    MinTimeout := 200 ; Min timeout per assist
+    MaxTimeout := 2000 ; Max timeout per assist
+    TimeoutPerClick := 100 ; timeout per click
 
     BotOn() {
-	      this.ShowNotification(global Name, "Bot on")
-	      global IsOn := true
-	      While (global IsOn && !ControlHandler.IsManual()) {
-		        Random, rand, global MinTimeout, global MaxTimeout
-		        Sleep, rand
-		        Send, {Click Right}
-		        Sleep, global TimeoutPerClick
-    	      Send, {Click Right}
-	      }
-	      this.ShowNotification(global Name, "Bot off")
-	      return
+        this.ShowNotification(this.Name, "Bot on")
+	    this.IsOn := true
+
+	    While (this.IsOn && !ControlHandler.IsManual()) {
+            Random, rand, this.MinTimeout, this.MaxTimeout
+		    Sleep, rand
+		    Send, {Click Right}
+		    Sleep, this.TimeoutPerClick
+    	    Send, {Click Right}
+        }
+
+        this.ShowNotification(this.Name, "Bot off")
+	    return
+    }
+
+    DoSingleAssist(){
+        MouseGetPos, xpos, ypos
+        ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
+        Send, {Click Right}
+        Sleep, this.TimeoutPerClick
+        Send, {Click Right}
+        ControlHandler.MoveCoursor(xpos, ypos)
     }
 
     BotOff() {
-	global IsOn := false
-	return
+        this.IsOn := false
+        return
     }
     
     ShowNotification(title, text) {
@@ -85,16 +89,21 @@ class Bot{
 }
 
 class ControlHandler {
+    AxisX := 50  ; first member position x
+    AxisY := 360  ; first member position y
+    SafeZoneX := 40
+    SafeZoneY := 15
+    MemberDistance := 34
 
     NextPosition() {
-        global AxisY := (global AxisY > 564) ? 598 : global AxisY += 34
-        this.MoveCoursor(global AxisX, global AxisY)
+        this.AxisY := (this.AxisY > 564) ? 598 : this.AxisY += this.MemberDistance
+        this.MoveCoursor(this.AxisX, this.AxisY)
         return
     }
 
     PreviousPosition() {
-        global AxisY := (global AxisY < 394) ? 360 : global AxisY -= 34
-        this.MoveCoursor(global AxisX, global AxisY)
+        this.AxisY := (this.AxisY < 394) ? 360 : this.AxisY -= this.MemberDistance
+        this.MoveCoursor(this.AxisX, this.AxisY)
         return
     }
     
@@ -104,36 +113,36 @@ class ControlHandler {
     }
     
     IsManual() {
-	MouseGetPos, xpos, ypos
-        return (!this.IsSaveZone(global AxisX, xpos, "x") || !this.IsSaveZone(global AxisY, ypos, "y"))
+        MouseGetPos, xpos, ypos
+        return (!this.IsSaveZone(this.AxisX, xpos, "x") || !this.IsSaveZone(this.AxisY, ypos, "y"))
     }
 
     IsSaveZone(currentPos, mousePos, axis) {
-	; 40 - save zone for x
-        ; 16 - save zone for y  
-        saveZone := 40
-	if(axis == "y") {
-		saveZone := 16
-	}
-	return ((currentPos + saveZone) > mousePos && (currentPos - saveZone) < mousePos)
+        safeZone := axis == "x" ? this.SafeZoneX : this.SafeZoneY       
+        return ((currentPos + saveZone) > mousePos && (currentPos - saveZone) < mousePos)
     }
 }
 
-class SkillPanelHandler{
+class SkillPanelHandler {
+    ActionTimeout := 100
+    LoopIterationTimeout := 50
+    PickUpHotkey := "4"
+    FistPanel := "!1"
+    SecondPanel := "!2"
 
     PickUpAction() {
-        Send, !2
+        Send, % this.SecondPanel
         while GetKeyState("F4", "P") {
-            Send, 4
-            Sleep, 50
+            Send, % this.PickUpHotkey
+            Sleep, % this.LoopIterationTimeout
         }
-        Send, !1
-        Sleep, 100
+        Send, % this.FistPanel
+        Sleep, % this.ActionTimeout
     }
 
     ShortcutAction(shortcut) {
-        Send, !2
+        Send, % this.SecondPanel
         Send, %shortcut%
-        Send, !1
+        Send, % this.FistPanel
     }
 }

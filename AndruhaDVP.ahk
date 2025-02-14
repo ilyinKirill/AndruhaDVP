@@ -164,7 +164,7 @@ class SkillPanelHandler {
 
 class ShoutHandler {
     IsShoutEnabled := false
-    ShoutTimeout := 3*1000
+    ShoutTimeout := 60*1000
     GuiBackgroundColor := "242729"
     FontSize := "s12"
     Font := "Arial"

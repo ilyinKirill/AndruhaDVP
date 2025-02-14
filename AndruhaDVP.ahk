@@ -1,9 +1,12 @@
 #SingleInstance, forse
 #IfWinActive ahk_class L2UnrealWWindowsViewportWindow
 
+global ShoutMessage := " "
+
 SkillPanelHandler := new SkillPanelHandler()
 BotHandler := new BotHandler()
 ControlHandler := new ControlHandler()
+ShoutHandler := new ShoutHandler()
 
 F1::
     SkillPanelHandler.ShortcutAction(1)
@@ -45,6 +48,23 @@ return
 
 Down::
     ControlHandler.NextPosition()
+return
+
+Numpad0::
+    ShoutHandler.IsShoutEnabled := false
+return
+
+Numpad1::
+    ShoutHandler.IsShoutEnabled := true
+    ShoutHandler.InvokeShout()
+return
+
+Numpad2::
+    ShoutHandler.Shout()
+return
+
+Numpad5::
+    ShoutHandler.GetMessageFromUser()
 return
 
 class BotHandler {
@@ -145,3 +165,69 @@ class SkillPanelHandler {
         Send, % this.FistPanel
     }
 }
+
+class ShoutHandler {
+    IsShoutEnabled := false
+    ShoutTimeout := 2*60*1000
+    GuiBackgroundColor := "242729"
+    FontSize := "s12"
+    Font := "Arial"
+
+    __New() {
+        InputControlWidth := 270
+        InputControlHeight := 30
+        ButtonWidth := 80
+        ButtonHeight := 23
+        SubmitButtonX := 50
+        SubmitButtonY := 50
+        CancelButtonX := 170
+        CancelButtonY := 50
+
+        Gui, +AlwaysOnTop -Caption +ToolWindow
+        Gui, Color, % this.GuiBackgroundColor
+        Gui, Font, % this.FontSize, % this.Font
+        Gui, Add, Edit, vShoutMessage w%InputControlWidth% h%InputControlHeight%
+        Gui, Add, Button, w%ButtonWidth% h%ButtonHeight% gSubmit x%SubmitButtonX% y%SubmitButtonY% +Center, Submit
+        Gui, Add, Button, w%ButtonWidth% h%ButtonHeight% gCancel x%CancelButtonX% y%CancelButtonY% +Center, Cancel
+    }
+
+    GetMessageFromUser() {
+        GuiWidth := 300
+        GuiHeight := 100
+
+        Gui, Show, w%GuiWidth% h%GuiHeight%, Shout Window
+    }
+    
+    InvokeShout(){
+        while (this.IsShoutEnabled) {
+            this.Shout()
+            this.ShoutTimeoutAction()
+        }
+    }
+
+    ShoutTimeoutAction(){
+        SubTimeoutTick := 100
+
+        Loop, % this.ShoutTimeout / SubTimeoutTick {
+            Sleep, SubTimeoutTick
+            if (!this.IsShoutEnabled) {
+                break
+            }
+        }
+    }
+
+    Shout(){
+        GuiControlGet, ShoutMessage,, ShoutMessage
+        Send, {Enter}
+        SendRaw, % ShoutMessage
+        Send, {Enter}
+    }
+}
+
+Submit:
+    Gui, Submit, Hide
+return
+
+Cancel:
+    Gui, Submit, Hide
+Return

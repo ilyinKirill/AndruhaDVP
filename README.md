@@ -16,3 +16,6 @@ HotKeys:
 - F12 - Stop bot (double right-clicking is disabled)
 - Up - Previous party member (focuses your cursor on top party member)
 - Down - Next party member (focuses your cursor on bottom party member)
+- Numpad0 - Disable shout
+- Numpad1 - Enable shout
+- Numpad5 - Open window for shout message input

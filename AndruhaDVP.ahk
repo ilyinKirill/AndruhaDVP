@@ -1,5 +1,5 @@
 #SingleInstance, forse
-#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
+;#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
 
 global ShoutMessage := " "
 
@@ -57,6 +57,10 @@ return
 Numpad1::
     ShoutHandler.IsShoutEnabled := true
     ShoutHandler.InvokeShout()
+return
+
+Numpad2::
+    ShoutHandler.Shout()
 return
 
 Numpad5::
@@ -164,7 +168,7 @@ class SkillPanelHandler {
 
 class ShoutHandler {
     IsShoutEnabled := false
-    ShoutTimeout := 60*1000
+    ShoutTimeout := 2*60*1000
     GuiBackgroundColor := "242729"
     FontSize := "s12"
     Font := "Arial"

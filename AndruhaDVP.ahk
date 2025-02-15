@@ -67,6 +67,10 @@ Numpad5::
     ShoutHandler.GetMessageFromUser()
 return
 
+M::
+    SkillPanelHandler.ShortcutAction(0)
+return
+
 class BotHandler {
     Name := "AndruhaDVP"
     IsOn := true

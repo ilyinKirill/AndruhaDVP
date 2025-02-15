@@ -20,3 +20,4 @@ HotKeys:
 - Numpad1 - Enable multiple shout
 - Numpad2 - Enable single shout
 - Numpad5 - Open window for shout message input
+- M - open map on second panel 0 hotkey

@@ -7,6 +7,37 @@ SkillPanelHandler := new SkillPanelHandler()
 BotHandler := new BotHandler()
 ControlHandler := new ControlHandler()
 ShoutHandler := new ShoutHandler()
+ActiveChanHandler := new ActiveChanHandler()
+
+;This logic provided by kondr-sugoi
+WinTitle := "Lineage II"
+PreviousWinState := WinActive(WinTitle)
+CheckWinStateIsRunning := 0
+
+SetTimer, CheckWindowState, 100
+return
+
+CheckWindowState:
+    if (CheckWinStateIsRunning)
+        return
+    CheckWinStateIsRunning := 1
+
+    if WinExist(WinTitle) {
+        CurrentState := WinActive(WinTitle)
+
+        if (CurrentState && !PreviousWinState) {
+            PreviousWinState := 1
+            Send, {Home}
+            Send, //
+            Send, {Enter}
+        }
+        else if (!CurrentState) {
+            PreviousWinState := 0
+        }
+    }
+
+    CheckWinStateIsRunning := 0
+return
 
 F1::
     SkillPanelHandler.ShortcutAction(1)
@@ -35,11 +66,11 @@ Return
 
 F11::
 	ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
-	BotHander.BotOn()
+	BotHandler.BotOn()
 return
 
 F12::
-    BotHander.BotOff()
+    BotHandler.BotOff()
 return
 
 Up::
@@ -140,7 +171,7 @@ class ControlHandler {
 
     IsSaveZone(currentPos, mousePos, axis) {
         safeZone := axis == "x" ? this.SafeZoneX : this.SafeZoneY       
-        return ((currentPos + saveZone) > mousePos && (currentPos - saveZone) < mousePos)
+        return ((currentPos + safeZone) > mousePos && (currentPos - safeZone) < mousePos)
     }
 }
 
@@ -214,7 +245,7 @@ class ShoutHandler {
                 break
             }
         }
-    }
+    } 
 
     Shout(){
         GuiControlGet, ShoutMessage,, ShoutMessage

@@ -81,20 +81,11 @@ Down::
     ControlHandler.NextPosition()
 return
 
-Numpad0::
-    ShoutHandler.IsShoutEnabled := false
-return
-
-Numpad1::
-    ShoutHandler.IsShoutEnabled := true
-    ShoutHandler.InvokeShout()
-return
-
-Numpad2::
+F9::
     ShoutHandler.Shout()
 return
 
-Numpad5::
+F10::
     ShoutHandler.GetMessageFromUser()
 return
 
@@ -198,7 +189,6 @@ class SkillPanelHandler {
 }
 
 class ShoutHandler {
-    IsShoutEnabled := false
     ShoutTimeout := 2*60*1000
     GuiBackgroundColor := "242729"
     FontSize := "s12"
@@ -228,24 +218,6 @@ class ShoutHandler {
 
         Gui, Show, w%GuiWidth% h%GuiHeight%, Shout Window
     }
-    
-    InvokeShout(){
-        while (this.IsShoutEnabled) {
-            this.Shout()
-            this.ShoutTimeoutAction()
-        }
-    }
-
-    ShoutTimeoutAction(){
-        SubTimeoutTick := 100
-
-        Loop, % this.ShoutTimeout / SubTimeoutTick {
-            Sleep, SubTimeoutTick
-            if (!this.IsShoutEnabled) {
-                break
-            }
-        }
-    } 
 
     Shout(){
         GuiControlGet, ShoutMessage,, ShoutMessage

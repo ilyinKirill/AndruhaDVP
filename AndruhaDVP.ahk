@@ -7,6 +7,37 @@ SkillPanelHandler := new SkillPanelHandler()
 BotHandler := new BotHandler()
 ControlHandler := new ControlHandler()
 ShoutHandler := new ShoutHandler()
+ActiveChanHandler := new ActiveChanHandler()
+
+;This logic provided by kondr-sugoi
+WinTitle := "Lineage II"
+PreviousWinState := WinActive(WinTitle)
+CheckWinStateIsRunning := 0
+
+SetTimer, CheckWindowState, 100
+return
+
+CheckWindowState:
+    if (CheckWinStateIsRunning)
+        return
+    CheckWinStateIsRunning := 1
+
+    if WinExist(WinTitle) {
+        CurrentState := WinActive(WinTitle)
+
+        if (CurrentState && !PreviousWinState) {
+            PreviousWinState := 1
+            Send, {Home}
+            Send, //
+            Send, {Enter}
+        }
+        else if (!CurrentState) {
+            PreviousWinState := 0
+        }
+    }
+
+    CheckWinStateIsRunning := 0
+return
 
 F1::
     SkillPanelHandler.ShortcutAction(1)
@@ -35,11 +66,11 @@ Return
 
 F11::
 	ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
-	BotHander.BotOn()
+	BotHandler.BotOn()
 return
 
 F12::
-    BotHander.BotOff()
+    BotHandler.BotOff()
 return
 
 Up::
@@ -50,20 +81,11 @@ Down::
     ControlHandler.NextPosition()
 return
 
-Numpad0::
-    ShoutHandler.IsShoutEnabled := false
-return
-
-Numpad1::
-    ShoutHandler.IsShoutEnabled := true
-    ShoutHandler.InvokeShout()
-return
-
-Numpad2::
+F9::
     ShoutHandler.Shout()
 return
 
-Numpad5::
+F10::
     ShoutHandler.GetMessageFromUser()
 return
 
@@ -140,7 +162,7 @@ class ControlHandler {
 
     IsSaveZone(currentPos, mousePos, axis) {
         safeZone := axis == "x" ? this.SafeZoneX : this.SafeZoneY       
-        return ((currentPos + saveZone) > mousePos && (currentPos - saveZone) < mousePos)
+        return ((currentPos + safeZone) > mousePos && (currentPos - safeZone) < mousePos)
     }
 }
 
@@ -167,7 +189,6 @@ class SkillPanelHandler {
 }
 
 class ShoutHandler {
-    IsShoutEnabled := false
     ShoutTimeout := 2*60*1000
     GuiBackgroundColor := "242729"
     FontSize := "s12"
@@ -196,24 +217,6 @@ class ShoutHandler {
         GuiHeight := 100
 
         Gui, Show, w%GuiWidth% h%GuiHeight%, Shout Window
-    }
-    
-    InvokeShout(){
-        while (this.IsShoutEnabled) {
-            this.Shout()
-            this.ShoutTimeoutAction()
-        }
-    }
-
-    ShoutTimeoutAction(){
-        SubTimeoutTick := 100
-
-        Loop, % this.ShoutTimeout / SubTimeoutTick {
-            Sleep, SubTimeoutTick
-            if (!this.IsShoutEnabled) {
-                break
-            }
-        }
     }
 
     Shout(){

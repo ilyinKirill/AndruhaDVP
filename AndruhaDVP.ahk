@@ -60,9 +60,11 @@ F5::
     SkillPanelHandler.ShortcutAction(5)
 return
 
+/*  
 F9::
-    BotHandler.DoSingleAssist()
+    BotHandler.DoSingleAssist()  // Currently redundant functionality
 Return
+*/
 
 F11::
 	ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)

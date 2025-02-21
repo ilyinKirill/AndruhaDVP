@@ -13,8 +13,12 @@ ActiveChanHandler := new ActiveChanHandler()
 WinTitle := "Lineage II"
 PreviousWinState := WinActive(WinTitle)
 CheckWinStateIsRunning := 0
+CheckWindowStatePeriod := 100
+UseSkillPeriod := 10*1000
+SkillHotKey := 3
 
-SetTimer, CheckWindowState, 100
+SetTimer, CheckWindowState, %CheckWindowStatePeriod%
+SetTimer, UseSkill, %UseSkillPeriod%
 return
 
 CheckWindowState:
@@ -37,6 +41,12 @@ CheckWindowState:
     }
 
     CheckWinStateIsRunning := 0
+return
+
+UseSkill:
+    if(BotHandler.IsOn) {
+        Send, {%SkillHotKey%}
+    }
 return
 
 F1::
@@ -93,7 +103,7 @@ return
 
 class BotHandler {
     Name := "AndruhaDVP"
-    IsOn := true
+    IsOn := false
     MinTimeout := 200 ; Min timeout per assist
     MaxTimeout := 2000 ; Max timeout per assist
     TimeoutPerClick := 100 ; timeout per click
@@ -110,6 +120,7 @@ class BotHandler {
     	    Send, {Click Right}
         }
 
+        this.IsOn := false
         this.ShowNotification(this.Name, "Bot off")
 	    return
     }

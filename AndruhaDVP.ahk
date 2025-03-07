@@ -1,5 +1,5 @@
 #SingleInstance, forse
-#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
+;#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
 
 ; ========================
 ; Region: Global variables and some shit from kondr-sugoi
@@ -130,7 +130,7 @@ return
 
 F11::
 	ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
-	BotHandler.BotOn(OverlayHandlers)
+	BotHandler.BotOn()
 return
 
 F12::
@@ -156,7 +156,7 @@ class BotHandler {
     MaxTimeout := 2000 ; Max timeout per assist
     TimeoutPerClick := 100 ; timeout per click
 
-    BotOn(over) {
+    BotOn() {
         this.ShowNotification(this.Name, "Bot on")
 	    this.IsOn := true
         SetTimer, UseSkill, On
@@ -311,19 +311,22 @@ class OverlayHandler {
         FontSize := 15
         WidthMargin := 500
         FontWidth := 1000
+        TextWidth := 700
+        BotStatusTextHeight := 20
+        OverlayTextHeight := 100
+        HeightPos := 10
         Font := "Tahoma"
         CustomColor := "282829"
 
         SysGet, ScreenWidth, 0
         SysGet, ScreenHeight, 1
         WidthPos := ScreenWidth - WidthMargin   
-        
         Gui, OverlayGui: New, +AlwaysOnTop +ToolWindow -Caption
         Gui, OverlayGui: Color, CustomColor
         Gui, OverlayGui: Font, s%FontSize% w%FontWidth%, % Font
-        Gui, OverlayGui: Add, Text, w700 h20 vBotStatus
-        Gui, OverlayGui: Add, Text, w700 h100 vOverlay cLime
-        Gui, OverlayGui: Show, x%WidthPos% y10 NoActivate, OverlayWindow
+        Gui, OverlayGui: Add, Text, w%TextWidth% h%BotStatusTextHeight% vBotStatus
+        Gui, OverlayGui: Add, Text, w%TextWidth% h%OverlayTextHeight% vOverlay cLime
+        Gui, OverlayGui: Show, x%WidthPos% y%HeightPos% NoActivate, OverlayWindow
         WinSet, TransColor, CustomColor, OverlayWindow
         this.UpdateOverLay()
     }

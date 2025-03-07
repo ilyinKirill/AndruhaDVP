@@ -1,9 +1,12 @@
 #SingleInstance, forse
-;#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
+#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
+
+; ========================
+; Region: Global variables and some shit from kondr-sugoi
+; ========================
 
 global ShoutMessage := " "
-global Overlay := " "
-global BotStatus := " "
+global Overlay := " "global BotStatus := " "
 
 SkillPanelHandler := new SkillPanelHandler()
 BotHandler := new BotHandler()
@@ -12,20 +15,29 @@ ShoutHandler := new ShoutHandler()
 ActiveChanHandler := new ActiveChanHandler()
 OverlayHandler := new OverlayHandler()
 
-;This logic provided by kondr-sugoi
+;This shit provided by kondr-sugoi
 WinTitle := "Lineage II"
 PreviousWinState := WinActive(WinTitle)
 CheckWinStateIsRunning := 0
+SkillHotKey := 3
+
 CheckWindowStatePeriod := 100
 UseSkillPeriod := 10*1000
 UpdateOverLayPeriod := 1000
-SkillHotKey := 3
 
+; ========================
+; Region: Timers
+; ========================
 
-
-;SetTimer, CheckWindowState, %CheckWindowStatePeriod%
-;SetTimer, UseSkill, %UseSkillPeriod%
+SetTimer, CheckWindowState, %CheckWindowStatePeriod%
+SetTimer, UpdateOverLay, %UpdateOverLayPeriod%
+SetTimer, UseSkill, %UseSkillPeriod%
+SetTimer, UseSkill, Off
 return
+
+; ========================
+; Region: Labels
+; ========================
 
 CheckWindowState:
     if (CheckWinStateIsRunning)
@@ -55,6 +67,25 @@ UseSkill:
         Send, {%SkillHotKey%}
     }
 return
+
+UpdateOverLay:
+    if(BotHandler.IsOn) {
+        OverlayHandler.SetCurrentBotTime()
+    }
+    OverlayHandler.UpdateOverLay()
+return
+
+Submit:
+    Gui, Submit, Hide
+return
+
+Cancel:
+    Gui, Submit, Hide
+Return
+
+; ========================
+; Region: Hotkeys
+; ========================
 
 F1::
     SkillPanelHandler.ShortcutAction(1)
@@ -114,6 +145,10 @@ Down::
     ControlHandler.NextPosition()
 return
 
+; ========================
+; Region: Classes
+; ========================
+
 class BotHandler {
     Name := "AndruhaDVP"
     IsOn := false
@@ -124,8 +159,10 @@ class BotHandler {
     BotOn(over) {
         this.ShowNotification(this.Name, "Bot on")
 	    this.IsOn := true
+        SetTimer, UseSkill, On
+        OverlayHandler.ResetBotTime()
         OverlayHandler.SetBeginBotTime()
-
+        
 	    While (!ControlHandler.IsManual()) {
             Random, rand, this.MinTimeout, this.MaxTimeout
 		    Sleep, rand
@@ -135,8 +172,8 @@ class BotHandler {
         }
 
         this.BotOff()
+        SetTimer, UseSkill, Off
         this.ShowNotification(this.Name, "Bot off")
-        OverlayHandler.SetCurrentBotTime()
 	    return
     }
 
@@ -170,14 +207,22 @@ class ControlHandler {
     NextPosition() {
         this.AxisY := (this.AxisY > 564) ? 598 : this.AxisY += this.MemberDistance
         this.MoveCoursor(this.AxisX, this.AxisY)
-        this.MaPosition += 1
+
+        if !(this.MaPosition >= 8) {
+            this.MaPosition += 1
+        }        
+        
         return
     }
 
     PreviousPosition() {
         this.AxisY := (this.AxisY < 394) ? 360 : this.AxisY -= this.MemberDistance
         this.MoveCoursor(this.AxisX, this.AxisY)
-        this.MaPosition -= 1
+
+        if !(this.MaPosition <= 1) {
+            this.MaPosition -= 1
+        }
+
         return
     }
     
@@ -320,25 +365,16 @@ class OverlayHandler {
         currentTimeText := "Current time: " . currentTime
         MaText := "MA position: " . maPosition
         overlayText := elapsedTimeText . "`n" . currentTimeText . "`n" . MaText
-        
-        GuiControl, +c%botStatusColor% , BotStatus,
-        GuiControl, , BotStatus, %botStatusText%
-        GuiControl, , Overlay, %overlayText%
+
+        Gui, OverlayGui:Font, c%botStatusColor% ; Set the new font color
+        GuiControl, OverlayGui:Font, BotStatus ; Apply the new font color to the control
+        GuiControl, OverlayGui:, BotStatus, %botStatusText% ; Update bot status text
+        GuiControl, OverlayGui:, Overlay, %overlayText% ; Update other overlay text
         return
     }
 
-    UpdateGui(botStatusText, overlayText){
-        GuiControl, , BotStatus, %botStatusText%
-        GuiControl, , Overlay, %overlayText%
+    ResetBotTime(){
+        this.CurrentBotTime := 0
+        this.BeginBotTime := 0
     }
 }
-
-
-
-Submit:
-    Gui, Submit, Hide
-return
-
-Cancel:
-    Gui, Submit, Hide
-Return

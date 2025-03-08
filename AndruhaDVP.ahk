@@ -172,6 +172,7 @@ class BotHandler {
         SetTimer, UseSkill, On
         OverlayHandler.ResetBotTime()
         OverlayHandler.SetBeginBotTime()
+        OverlayHandler.SetCurrentBotTime()
         OverlayHandler.UpdateOverLay()
 
 	while (!ControlHandler.IsManual()) {
@@ -323,7 +324,7 @@ class OverlayHandler {
         BotStatusTextHeight := 20
         OverlayTextHeight := 100
         HeightPos := 10
-        Font := "Tahoma"
+        Font := "Consolas"
         CustomColor := "282829"
 
         SysGet, ScreenWidth, 0
@@ -351,15 +352,18 @@ class OverlayHandler {
     }
 
     GetCurrentTime(){
-        FormatTime, currentTime, , HH:mm
+        FormatTime, currentTime, , HH : mm
         return currentTime
     }
 
     GetTimeInFormat(timeInMs) {
         seconds := Floor(timeInMs // 1000)
-        minutes := seconds // 60   
+        minutes := seconds // 60
+        remainingSeconds := Mod(seconds, 60)
+    
         FormattedMinutes := Format("{:02}", minutes)
-        FormattedSeconds := Format("{:02}", seconds)    
+        FormattedSeconds := Format("{:02}", remainingSeconds)
+    
         return FormattedMinutes . " : " . FormattedSeconds
     }
 

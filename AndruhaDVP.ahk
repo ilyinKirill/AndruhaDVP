@@ -139,7 +139,6 @@ return
 F11::
     ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
     BotHandler.BotOn()
-    OverlayHandler.UpdateOverLay()
 return
 
 F12::
@@ -173,7 +172,8 @@ class BotHandler {
         SetTimer, UseSkill, On
         OverlayHandler.ResetBotTime()
         OverlayHandler.SetBeginBotTime()
-        
+        OverlayHandler.UpdateOverLay()
+
 	while (!ControlHandler.IsManual()) {
 	    Random, rand, this.MinTimeout, this.MaxTimeout
 	    Sleep, rand

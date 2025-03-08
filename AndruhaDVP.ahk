@@ -1,5 +1,5 @@
 #SingleInstance, forse
-;#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
+#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
 
 ; ========================
 ; Region: Global variables and some shit from kondr-sugoi
@@ -88,35 +88,42 @@ Return
 ; Region: Hotkeys
 ; ========================
 
+#MaxThreadsPerHotkey 1
 F1::
     SkillPanelHandler.ShortcutAction(1)
 return
 
+#MaxThreadsPerHotkey 1
 F2::
     SkillPanelHandler.ShortcutAction(2)
 return
 
+#MaxThreadsPerHotkey 1
 F3::
     SkillPanelHandler.ShortcutAction(3)
 return
 
 #MaxThreadsPerHotkey 1
 F4::
-    SkillPanelHandler.PickUpAction()
+    SkillPanelHandler.ShortcutAction(4)
 return
 
+#MaxThreadsPerHotkey 1
 F5::
     SkillPanelHandler.ShortcutAction(5)
 return
 
+#MaxThreadsPerHotkey 1
 F6::
     SkillPanelHandler.ShortcutAction(6)
 return
 
+#MaxThreadsPerHotkey 1
 F7::
     SkillPanelHandler.ShortcutAction(7)
 return
 
+#MaxThreadsPerHotkey 1
 F8::
     SkillPanelHandler.ShortcutAction(8)
 return
@@ -130,8 +137,9 @@ F10::
 return
 
 F11::
-	ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
-	BotHandler.BotOn()
+    ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
+    BotHandler.BotOn()
+    OverlayHandler.UpdateOverLay()
 return
 
 F12::
@@ -140,10 +148,12 @@ Return
 
 Up::
     ControlHandler.PreviousPosition()
+    OverlayHandler.UpdateOverLay()
 return
 
 Down::
     ControlHandler.NextPosition()
+    OverlayHandler.UpdateOverLay()
 return
 
 ; ========================
@@ -159,26 +169,29 @@ class BotHandler {
 
     BotOn() {
         this.ShowNotification(this.Name, "Bot on")
-	    this.IsOn := true
+	this.IsOn := true
         SetTimer, UseSkill, On
         OverlayHandler.ResetBotTime()
         OverlayHandler.SetBeginBotTime()
         
-	    While (!ControlHandler.IsManual()) {
-            Random, rand, this.MinTimeout, this.MaxTimeout
-		    Sleep, rand
-		    Send, {Click Right}
-		    Sleep, this.TimeoutPerClick
-    	    Send, {Click Right}
+	while (!ControlHandler.IsManual()) {
+	    Random, rand, this.MinTimeout, this.MaxTimeout
+	    Sleep, rand
+
+	    if (!ControlHandler.IsManual()) {
+	        Send, {Click Right}
+	        Sleep, this.TimeoutPerClick
+	        Send, {Click Right}
+	    }
         }
 
         this.BotOff()
         SetTimer, UseSkill, Off
         this.ShowNotification(this.Name, "Bot off")
-	    return
+	return
     }
 
-    DoSingleAssist(){
+    DoSingleAssist() {
         MouseGetPos, xpos, ypos
         ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
         Send, {Click Right}
@@ -245,22 +258,16 @@ class ControlHandler {
 
 class SkillPanelHandler {
     LoopIterationTimeout := 50
-    PickUpHotkey := "4"
     FistPanel := "!1"
     SecondPanel := "!2"
 
-    PickUpAction() {
+    ShortcutAction(shortcut) {
+    	key := "F" . shortcut
         Send, % this.SecondPanel
-        while GetKeyState("F4", "P") {
-            Send, % this.PickUpHotkey
+        while GetKeyState(key, "P") {
+            Send, %shortcut%
             Sleep, % this.LoopIterationTimeout
         }
-        Send, % this.FistPanel
-    }
-
-    ShortcutAction(shortcut) {
-        Send, % this.SecondPanel
-        Send, %shortcut%
         Send, % this.FistPanel
     }
 }
@@ -361,13 +368,13 @@ class OverlayHandler {
     }
 
     UpdateOverlayInfo(isBotOn, elapsedTime, currentTime, maPosition){
-        botStatus := (isBotOn ? "on" : "off") 
-        botStatusText := BotHandler.Name . " " . botStatus
+        botStatus := (isBotOn ? "ON" : "OFF") 
+        botStatusText := BotHandler.Name . " " . A_Tab . botStatus
         botStatusColor := (isBotOn ? "Lime" : "Red")
 
-        elapsedTimeText := "Elapsed time: " .  elapsedTime
-        currentTimeText := "Current time: " . currentTime
-        MaText := "MA position: " . maPosition
+        elapsedTimeText := "Elapsed time: " . A_Tab . elapsedTime
+        currentTimeText := "Current time: " . A_Tab . currentTime
+        MaText := "MA position: " . A_Tab . maPosition
         overlayText := elapsedTimeText . "`n" . currentTimeText . "`n" . MaText
 
         Gui, OverlayGui:Font, c%botStatusColor% ; Set the new font color

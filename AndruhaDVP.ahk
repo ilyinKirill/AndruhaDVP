@@ -22,8 +22,8 @@ PreviousWinState := WinActive(WinTitle)
 CheckWinStateIsRunning := 0
 SkillHotKey := 3
 
-CheckWindowStatePeriod := 100
-UseSkillPeriod := 10*1000
+CheckWindowStatePeriod := 50
+UseSkillPeriod := 10*7000
 UpdateOverLayPeriod := 1000
 
 ; ========================
@@ -64,13 +64,13 @@ CheckWindowState:
 return
 
 UseSkill:
-    if(BotHandler.IsOn) {
+    if (BotHandler.IsOn) {
         Send, {%SkillHotKey%}
     }
 return
 
 UpdateOverLay:
-    if(BotHandler.IsOn) {
+    if (BotHandler.IsOn) {
         OverlayHandler.SetCurrentBotTime()
     }
     OverlayHandler.UpdateOverLay()
@@ -90,7 +90,7 @@ Return
 
 #MaxThreadsPerHotkey 1
 F1::
-    SkillPanelHandler.ShortcutAction(1)
+    BotHandler.DoSingleAssist(1)
 return
 
 #MaxThreadsPerHotkey 1
@@ -142,7 +142,8 @@ F11::
 return
 
 F12::
-    BotHandler.DoSingleAssist()  // Currently redundant functionality
+    BotHandler.ToogleSingleAssistMode()
+    OverlayHandler.UpdateOverLay()
 Return
 
 Up::
@@ -162,9 +163,10 @@ return
 class BotHandler {
     Name := "AndruhaDVP"
     IsOn := false
+    SingleAssistMode := false
     MinTimeout := 200 ; Min timeout per assist
     MaxTimeout := 2000 ; Max timeout per assist
-    TimeoutPerClick := 100 ; timeout per click
+    TimeoutPerClick := 50 ; timeout per click
 
     BotOn() {
         this.ShowNotification(this.Name, "Bot on")
@@ -192,13 +194,22 @@ class BotHandler {
 	return
     }
 
-    DoSingleAssist() {
-        MouseGetPos, xpos, ypos
-        ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
-        Send, {Click Right}
-        Sleep, this.TimeoutPerClick
-        Send, {Click Right}
-        ControlHandler.MoveCoursor(xpos, ypos)
+    DoSingleAssist(shortcut) {
+        if (this.SingleAssistMode) {
+            MouseGetPos, xpos, ypos
+            ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
+            Send, {Click Right}
+            Sleep, this.TimeoutPerClick
+            Send, {Click Right}
+            ControlHandler.MoveCoursor(xpos, ypos)
+        }
+        else {
+            SkillPanelHandler.ShortcutAction(shortcut)
+        }
+    }
+
+    ToogleSingleAssistMode() {
+        this.SingleAssistMode := !this.SingleAssistMode
     }
 
     BotOff() {
@@ -317,7 +328,7 @@ class OverlayHandler {
     CurrentBotTime := 0
 
     __New() {     
-        FontSize := 15
+        FontSize := 16
         WidthMargin := 500
         FontWidth := 1000
         TextWidth := 700
@@ -345,14 +356,14 @@ class OverlayHandler {
     }
 
     SetCurrentBotTime() {
-        if(BotHandler.IsOn){
+        if (BotHandler.IsOn){
             this.CurrentBotTime := A_TickCount
             result := this.CurrentBotTime - this.BeginBotTime
         }
     }
 
     GetCurrentTime(){
-        FormatTime, currentTime, , HH : mm
+        FormatTime, currentTime, , HH:mm
         return currentTime
     }
 
@@ -364,14 +375,14 @@ class OverlayHandler {
         FormattedMinutes := Format("{:02}", minutes)
         FormattedSeconds := Format("{:02}", remainingSeconds)
     
-        return FormattedMinutes . " : " . FormattedSeconds
+        return FormattedMinutes . ":" . FormattedSeconds
     }
 
     UpdateOverLay() {
-        this.UpdateOverlayInfo(BotHandler.IsOn, this.GetTimeInFormat(this.CurrentBotTime - this.BeginBotTime), this.GetCurrentTime(), ControlHandler.MaPosition)
+        this.UpdateOverlayInfo(BotHandler.IsOn, BotHandler.SingleAssistMode, this.GetTimeInFormat(this.CurrentBotTime - this.BeginBotTime), this.GetCurrentTime(), ControlHandler.MaPosition)
     }
 
-    UpdateOverlayInfo(isBotOn, elapsedTime, currentTime, maPosition){
+    UpdateOverlayInfo(isBotOn, singleAssistMode, elapsedTime, currentTime, maPosition){
         botStatus := (isBotOn ? "ON" : "OFF") 
         botStatusText := BotHandler.Name . " " . A_Tab . botStatus
         botStatusColor := (isBotOn ? "Lime" : "Red")
@@ -379,7 +390,8 @@ class OverlayHandler {
         elapsedTimeText := "Elapsed time: " . A_Tab . elapsedTime
         currentTimeText := "Current time: " . A_Tab . currentTime
         MaText := "MA position: " . A_Tab . maPosition
-        overlayText := elapsedTimeText . "`n" . currentTimeText . "`n" . MaText
+        SingleAssistModeText := "Single Assist:" . A_Tab . (singleAssistMode ? "ON" : "OFF")
+        overlayText := elapsedTimeText . "`n" . currentTimeText . "`n" . MaText . "`n" . SingleAssistModeText
 
         Gui, OverlayGui:Font, c%botStatusColor% ; Set the new font color
         GuiControl, OverlayGui:Font, BotStatus ; Apply the new font color to the control

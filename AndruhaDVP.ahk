@@ -1,12 +1,13 @@
 #SingleInstance, forse
-#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
+;#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
 
 ; ========================
 ; Region: Global variables and some shit from kondr-sugoi
 ; ========================
 
-global ShoutMessage := " "
-global Overlay := " "global BotStatus := " "
+global ShoutMessage
+global Overlay
+global BotStatus
 
 SkillPanelHandler := new SkillPanelHandler()
 BotHandler := new BotHandler()

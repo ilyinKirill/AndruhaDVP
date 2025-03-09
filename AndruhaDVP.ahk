@@ -333,12 +333,12 @@ class OverlayHandler {
     CurrentBotTime := 0
 
     __New() {     
-        FontSize := 16
+        FontSize := 17
         WidthMargin := 500
         FontWidth := 1000
         TextWidth := 700
-        BotStatusTextHeight := 20
-        OverlayTextHeight := 100
+        BotStatusTextHeight := 22
+        OverlayTextHeight := 200
         HeightPos := 10
         Font := "Consolas"
         CustomColor := "282829"
@@ -394,9 +394,10 @@ class OverlayHandler {
 
         elapsedTimeText := "Elapsed time: " . A_Tab . elapsedTime
         currentTimeText := "Current time: " . A_Tab . currentTime
-        MaText := "MA position: " . A_Tab . maPosition
+        maText := "MA position: " . A_Tab . maPosition
+        separatingLine := "---------------------"
         SingleAssistModeText := "Single Assist:" . A_Tab . (singleAssistMode ? "ON" : "OFF")
-        overlayText := elapsedTimeText . "`n" . currentTimeText . "`n" . MaText . "`n" . SingleAssistModeText
+        overlayText := elapsedTimeText . "`n" . maText . "`n" . SingleAssistModeText . "`n" . separatingLine . "`n" . currentTimeText
 
         Gui, OverlayGui:Font, c%botStatusColor% ; Set the new font color
         GuiControl, OverlayGui:Font, BotStatus ; Apply the new font color to the control

@@ -13,7 +13,6 @@ SkillPanelHandler := new SkillPanelHandler()
 BotHandler := new BotHandler()
 ControlHandler := new ControlHandler()
 ShoutHandler := new ShoutHandler()
-ActiveChanHandler := new ActiveChanHandler()
 OverlayHandler := new OverlayHandler()
 
 ;This shit provided by kondr-sugoi
@@ -23,7 +22,7 @@ CheckWinStateIsRunning := 0
 SkillHotKey := 3
 
 CheckWindowStatePeriod := 50
-UseSkillPeriod := 10*7000
+UseSkillPeriod := 7*1000
 UpdateOverLayPeriod := 1000
 
 ; ========================

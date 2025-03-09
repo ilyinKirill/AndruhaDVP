@@ -204,7 +204,7 @@ class BotHandler {
             ControlHandler.MoveCoursor(xpos, ypos)
         }
         else {
-            SkillPanelHandler.ShortcutAction(shortcut)
+            SkillPanelHandler.SingleShortcutAction(shortcut)
         }
     }
 
@@ -280,6 +280,12 @@ class SkillPanelHandler {
             Send, %shortcut%
             Sleep, % this.LoopIterationTimeout
         }
+        Send, % this.FistPanel
+    }
+
+    SingleShortcutAction(shortcut) {
+        Send, % this.SecondPanel
+        Send, %shortcut%
         Send, % this.FistPanel
     }
 }

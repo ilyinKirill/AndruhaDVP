@@ -1,5 +1,5 @@
 #SingleInstance, forse
-;#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
+#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
 
 ; ========================
 ; Region: Global variables and some shit from kondr-sugoi
@@ -13,7 +13,6 @@ SkillPanelHandler := new SkillPanelHandler()
 BotHandler := new BotHandler()
 ControlHandler := new ControlHandler()
 ShoutHandler := new ShoutHandler()
-ActiveChanHandler := new ActiveChanHandler()
 OverlayHandler := new OverlayHandler()
 
 ;This shit provided by kondr-sugoi
@@ -22,8 +21,8 @@ PreviousWinState := WinActive(WinTitle)
 CheckWinStateIsRunning := 0
 SkillHotKey := 3
 
-CheckWindowStatePeriod := 100
-UseSkillPeriod := 10*1000
+CheckWindowStatePeriod := 50
+UseSkillPeriod := 7*1000
 UpdateOverLayPeriod := 1000
 
 ; ========================
@@ -64,13 +63,13 @@ CheckWindowState:
 return
 
 UseSkill:
-    if(BotHandler.IsOn) {
+    if (BotHandler.IsOn) {
         Send, {%SkillHotKey%}
     }
 return
 
 UpdateOverLay:
-    if(BotHandler.IsOn) {
+    if (BotHandler.IsOn) {
         OverlayHandler.SetCurrentBotTime()
     }
     OverlayHandler.UpdateOverLay()
@@ -88,37 +87,44 @@ Return
 ; Region: Hotkeys
 ; ========================
 
+#MaxThreadsPerHotkey 1
 F1::
-    SkillPanelHandler.ShortcutAction(1)
+    SkillPanelHandler.SingleShortcutAction(1)
 return
 
+#MaxThreadsPerHotkey 1
 F2::
-    SkillPanelHandler.ShortcutAction(2)
+    SkillPanelHandler.SingleShortcutAction(2)
 return
 
+#MaxThreadsPerHotkey 1
 F3::
-    SkillPanelHandler.ShortcutAction(3)
+    SkillPanelHandler.SingleShortcutAction(3)
 return
 
 #MaxThreadsPerHotkey 1
 F4::
-    SkillPanelHandler.PickUpAction()
+    SkillPanelHandler.SingleShortcutAction(4)
 return
 
+#MaxThreadsPerHotkey 1
 F5::
-    SkillPanelHandler.ShortcutAction(5)
+    SkillPanelHandler.SingleShortcutAction(5)
 return
 
+#MaxThreadsPerHotkey 1
 F6::
-    SkillPanelHandler.ShortcutAction(6)
+    SkillPanelHandler.SingleShortcutAction(6)
 return
 
+#MaxThreadsPerHotkey 1
 F7::
-    SkillPanelHandler.ShortcutAction(7)
+    SkillPanelHandler.SingleShortcutAction(7)
 return
 
+#MaxThreadsPerHotkey 1
 F8::
-    SkillPanelHandler.ShortcutAction(8)
+    SkillPanelHandler.SingleShortcutAction(8)
 return
 
 F9::
@@ -130,20 +136,22 @@ F10::
 return
 
 F11::
-	ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
-	BotHandler.BotOn()
+    ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
+    BotHandler.BotOn()
 return
 
 F12::
-    BotHandler.DoSingleAssist()  // Currently redundant functionality
+    BotHandler.DoSingleAssist() // Currently redundant functionality
 Return
 
 Up::
     ControlHandler.PreviousPosition()
+    OverlayHandler.UpdateOverLay()
 return
 
 Down::
     ControlHandler.NextPosition()
+    OverlayHandler.UpdateOverLay()
 return
 
 ; ========================
@@ -155,31 +163,36 @@ class BotHandler {
     IsOn := false
     MinTimeout := 200 ; Min timeout per assist
     MaxTimeout := 2000 ; Max timeout per assist
-    TimeoutPerClick := 100 ; timeout per click
+    TimeoutPerClick := 50 ; timeout per click
 
     BotOn() {
         this.ShowNotification(this.Name, "Bot on")
-	    this.IsOn := true
+	this.IsOn := true
         SetTimer, UseSkill, On
         OverlayHandler.ResetBotTime()
         OverlayHandler.SetBeginBotTime()
-        
-	    While (!ControlHandler.IsManual()) {
-            Random, rand, this.MinTimeout, this.MaxTimeout
-		    Sleep, rand
-		    Send, {Click Right}
-		    Sleep, this.TimeoutPerClick
-    	    Send, {Click Right}
+        OverlayHandler.SetCurrentBotTime()
+        OverlayHandler.UpdateOverLay()
+
+	while (!ControlHandler.IsManual()) {
+	    Random, rand, this.MinTimeout, this.MaxTimeout
+	    Sleep, rand
+
+	    if (!ControlHandler.IsManual()) {
+	        Send, {Click Right}
+	        Sleep, this.TimeoutPerClick
+	        Send, {Click Right}
+	    }
         }
 
         this.BotOff()
         SetTimer, UseSkill, Off
         this.ShowNotification(this.Name, "Bot off")
-	    return
+	return
     }
 
-    DoSingleAssist(){
-        MouseGetPos, xpos, ypos
+    DoSingleAssist() {
+	MouseGetPos, xpos, ypos
         ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
         Send, {Click Right}
         Sleep, this.TimeoutPerClick
@@ -245,20 +258,20 @@ class ControlHandler {
 
 class SkillPanelHandler {
     LoopIterationTimeout := 50
-    PickUpHotkey := "4"
     FistPanel := "!1"
     SecondPanel := "!2"
 
-    PickUpAction() {
+    ShortcutAction(shortcut) {
+    	key := "F" . shortcut
         Send, % this.SecondPanel
-        while GetKeyState("F4", "P") {
-            Send, % this.PickUpHotkey
+        while GetKeyState(key, "P") {
+            Send, %shortcut%
             Sleep, % this.LoopIterationTimeout
         }
         Send, % this.FistPanel
     }
 
-    ShortcutAction(shortcut) {
+    SingleShortcutAction(shortcut) {
         Send, % this.SecondPanel
         Send, %shortcut%
         Send, % this.FistPanel
@@ -309,14 +322,14 @@ class OverlayHandler {
     CurrentBotTime := 0
 
     __New() {     
-        FontSize := 15
+        FontSize := 17
         WidthMargin := 500
         FontWidth := 1000
         TextWidth := 700
-        BotStatusTextHeight := 20
-        OverlayTextHeight := 100
+        BotStatusTextHeight := 22
+        OverlayTextHeight := 200
         HeightPos := 10
-        Font := "Tahoma"
+        Font := "Consolas"
         CustomColor := "282829"
 
         SysGet, ScreenWidth, 0
@@ -337,7 +350,7 @@ class OverlayHandler {
     }
 
     SetCurrentBotTime() {
-        if(BotHandler.IsOn){
+        if (BotHandler.IsOn){
             this.CurrentBotTime := A_TickCount
             result := this.CurrentBotTime - this.BeginBotTime
         }
@@ -350,10 +363,13 @@ class OverlayHandler {
 
     GetTimeInFormat(timeInMs) {
         seconds := Floor(timeInMs // 1000)
-        minutes := seconds // 60   
+        minutes := seconds // 60
+        remainingSeconds := Mod(seconds, 60)
+    
         FormattedMinutes := Format("{:02}", minutes)
-        FormattedSeconds := Format("{:02}", seconds)    
-        return FormattedMinutes . " : " . FormattedSeconds
+        FormattedSeconds := Format("{:02}", remainingSeconds)
+    
+        return FormattedMinutes . ":" . FormattedSeconds
     }
 
     UpdateOverLay() {
@@ -361,14 +377,15 @@ class OverlayHandler {
     }
 
     UpdateOverlayInfo(isBotOn, elapsedTime, currentTime, maPosition){
-        botStatus := (isBotOn ? "on" : "off") 
-        botStatusText := BotHandler.Name . " " . botStatus
+        botStatus := (isBotOn ? "ON" : "OFF") 
+        botStatusText := BotHandler.Name . " " . A_Tab . botStatus
         botStatusColor := (isBotOn ? "Lime" : "Red")
 
-        elapsedTimeText := "Elapsed time: " .  elapsedTime
-        currentTimeText := "Current time: " . currentTime
-        MaText := "MA position: " . maPosition
-        overlayText := elapsedTimeText . "`n" . currentTimeText . "`n" . MaText
+        elapsedTimeText := "Elapsed time: " . A_Tab . elapsedTime
+        currentTimeText := "Current time: " . A_Tab . currentTime
+        maText := "MA position: " . A_Tab . maPosition
+        separatingLine := "---------------------"
+        overlayText := elapsedTimeText . "`n" . maText . "`n" . separatingLine . "`n" . currentTimeText
 
         Gui, OverlayGui:Font, c%botStatusColor% ; Set the new font color
         GuiControl, OverlayGui:Font, BotStatus ; Apply the new font color to the control

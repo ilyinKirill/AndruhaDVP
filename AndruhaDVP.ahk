@@ -22,7 +22,7 @@ CheckWinStateIsRunning := 0
 SkillHotKey := 3
 
 CheckWindowStatePeriod := 50
-UseSkillPeriod := 7*1000
+UseSkillPeriod := 20*1000
 UpdateOverLayPeriod := 1000
 
 ; ========================
@@ -88,43 +88,29 @@ Return
 ; ========================
 
 #MaxThreadsPerHotkey 1
+1::
+2::
+3::
+4::
+5::
+6::
+    SkillPanelHandler.FirstPanelShortcut(A_ThisHotkey)
+return
+
+#MaxThreadsPerHotkey 1
 F1::
     BotHandler.DoSingleAssist(1)
 return
 
 #MaxThreadsPerHotkey 1
 F2::
-    SkillPanelHandler.ShortcutAction(2)
-return
-
-#MaxThreadsPerHotkey 1
 F3::
-    SkillPanelHandler.ShortcutAction(3)
-return
-
-#MaxThreadsPerHotkey 1
 F4::
-    SkillPanelHandler.ShortcutAction(4)
-return
-
-#MaxThreadsPerHotkey 1
 F5::
-    SkillPanelHandler.ShortcutAction(5)
-return
-
-#MaxThreadsPerHotkey 1
 F6::
-    SkillPanelHandler.ShortcutAction(6)
-return
-
-#MaxThreadsPerHotkey 1
 F7::
-    SkillPanelHandler.ShortcutAction(7)
-return
-
-#MaxThreadsPerHotkey 1
 F8::
-    SkillPanelHandler.ShortcutAction(8)
+    SkillPanelHandler.SecondPanelShortcut(A_ThisHotkey)
 return
 
 F9::
@@ -142,6 +128,11 @@ return
 
 F12::
     BotHandler.ToogleSingleAssistMode()
+    OverlayHandler.UpdateOverLay()
+Return
+
++F12::
+    SkillPanelHandler.ToogleFuryMode()
     OverlayHandler.UpdateOverLay()
 Return
 
@@ -271,21 +262,55 @@ class SkillPanelHandler {
     LoopIterationTimeout := 50
     FistPanel := "!1"
     SecondPanel := "!2"
+    FuryModeEnabled := true
+    FuryShortcut := 9
+    Panel1FuryShortcuts := Array(1, 3, 4, 6)
+    Panel2FuryShortcuts := Array(2, 5, 6, 7)
+    
+    FirstPanelShortcut(key) {
+    	this.PanelShortcut(key, key, this.Panel1FuryShortcuts)
+    }
 
-    ShortcutAction(shortcut) {
-    	key := "F" . shortcut
+    SecondPanelShortcut(key) {
+    	shortcut := SubStr(key, 2)
         Send, % this.SecondPanel
+        this.PanelShortcut(shortcut, key, this.Panel2FuryShortcuts)
+        Send, % this.FistPanel
+    }
+
+    PanelShortcut(shortcut, key, furyShortcuts) {
+    	if (this.FuryEnabled(shortcut, furyShortcuts)) {
+    	    Send, % this.FuryShortcut
+	}
         while GetKeyState(key, "P") {
             Send, %shortcut%
             Sleep, % this.LoopIterationTimeout
         }
-        Send, % this.FistPanel
+    	if (this.FuryEnabled(shortcut, furyShortcuts)) {
+    	    Send, % this.FuryShortcut
+	}
     }
 
-    SingleShortcutAction(shortcut) {
+    SecondPanelSingleShortcut(shortcut) {
         Send, % this.SecondPanel
         Send, %shortcut%
         Send, % this.FistPanel
+    }
+
+    FuryEnabled(shortcut, furyShortcuts) {
+	if(!this.FuryModeEnabled) {
+	    return false
+        }
+        for index, value in furyShortcuts {
+            if (value = shortcut) {
+                return true
+            }
+        }
+        return false
+    }
+
+    ToogleFuryMode() {
+        this.FuryModeEnabled := !this.FuryModeEnabled
     }
 }
 
@@ -384,10 +409,10 @@ class OverlayHandler {
     }
 
     UpdateOverLay() {
-        this.UpdateOverlayInfo(BotHandler.IsOn, BotHandler.SingleAssistMode, this.GetTimeInFormat(this.CurrentBotTime - this.BeginBotTime), this.GetCurrentTime(), ControlHandler.MaPosition)
+        this.UpdateOverlayInfo(BotHandler.IsOn, BotHandler.SingleAssistMode, SkillPanelHandler.FuryModeEnabled, this.GetTimeInFormat(this.CurrentBotTime - this.BeginBotTime), this.GetCurrentTime(), ControlHandler.MaPosition)
     }
 
-    UpdateOverlayInfo(isBotOn, singleAssistMode, elapsedTime, currentTime, maPosition){
+    UpdateOverlayInfo(isBotOn, singleAssistMode, furyMode, elapsedTime, currentTime, maPosition){
         botStatus := (isBotOn ? "ON" : "OFF") 
         botStatusText := BotHandler.Name . " " . A_Tab . botStatus
         botStatusColor := (isBotOn ? "Lime" : "Red")
@@ -397,7 +422,8 @@ class OverlayHandler {
         maText := "MA position: " . A_Tab . maPosition
         separatingLine := "---------------------"
         SingleAssistModeText := "Single Assist:" . A_Tab . (singleAssistMode ? "ON" : "OFF")
-        overlayText := elapsedTimeText . "`n" . maText . "`n" . SingleAssistModeText . "`n" . separatingLine . "`n" . currentTimeText
+        FuryModeText := "Fury Mode:" . A_Tab . (furyMode ? "ON" : "OFF")
+        overlayText := elapsedTimeText . "`n" . maText . "`n" . SingleAssistModeText . "`n" . FuryModeText . "`n" . separatingLine . "`n" . currentTimeText
 
         Gui, OverlayGui:Font, c%botStatusColor% ; Set the new font color
         GuiControl, OverlayGui:Font, BotStatus ; Apply the new font color to the control

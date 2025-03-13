@@ -141,8 +141,7 @@ F11::
 return
 
 F12::
-    BotHandler.ToogleSingleAssistMode()
-    OverlayHandler.UpdateOverLay()
+    BotHandler.DoSingleAssist() // Currently redundant functionality
 Return
 
 Up::

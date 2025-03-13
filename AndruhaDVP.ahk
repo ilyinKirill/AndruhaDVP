@@ -89,7 +89,7 @@ Return
 
 #MaxThreadsPerHotkey 1
 F1::
-    SkillPanelHandler.SingleShortcutAction(2)
+    SkillPanelHandler.SingleShortcutAction(1)
 return
 
 #MaxThreadsPerHotkey 1

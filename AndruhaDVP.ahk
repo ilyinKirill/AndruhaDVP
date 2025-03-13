@@ -22,7 +22,7 @@ CheckWinStateIsRunning := 0
 SkillHotKey := 3
 
 CheckWindowStatePeriod := 50
-UseSkillPeriod := 20*1000
+UseSkillPeriod := 7*1000
 UpdateOverLayPeriod := 1000
 
 ; ========================
@@ -194,7 +194,7 @@ class BotHandler {
             ControlHandler.MoveCoursor(xpos, ypos)
         }
         else {
-            SkillPanelHandler.SingleShortcutAction(shortcut)
+            SkillPanelHandler.SecondPanelSingleShortcut(shortcut)
         }
     }
 

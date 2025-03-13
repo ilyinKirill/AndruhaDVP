@@ -191,7 +191,7 @@ class BotHandler {
 	return
     }
 
-    DoSingleAssist(shortcut) {
+    DoSingleAssist() {
 	MouseGetPos, xpos, ypos
         ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
         Send, {Click Right}

@@ -89,42 +89,42 @@ Return
 
 #MaxThreadsPerHotkey 1
 F1::
-    SkillPanelHandler.SingleShortcutAction(1)
+    BotHandler.DoSingleAssist(1)
 return
 
 #MaxThreadsPerHotkey 1
 F2::
-    SkillPanelHandler.SingleShortcutAction(2)
+    SkillPanelHandler.ShortcutAction(2)
 return
 
 #MaxThreadsPerHotkey 1
 F3::
-    SkillPanelHandler.SingleShortcutAction(3)
+    SkillPanelHandler.ShortcutAction(3)
 return
 
 #MaxThreadsPerHotkey 1
 F4::
-    SkillPanelHandler.SingleShortcutAction(4)
+    SkillPanelHandler.ShortcutAction(4)
 return
 
 #MaxThreadsPerHotkey 1
 F5::
-    SkillPanelHandler.SingleShortcutAction(5)
+    SkillPanelHandler.ShortcutAction(5)
 return
 
 #MaxThreadsPerHotkey 1
 F6::
-    SkillPanelHandler.SingleShortcutAction(6)
+    SkillPanelHandler.ShortcutAction(6)
 return
 
 #MaxThreadsPerHotkey 1
 F7::
-    SkillPanelHandler.SingleShortcutAction(7)
+    SkillPanelHandler.ShortcutAction(7)
 return
 
 #MaxThreadsPerHotkey 1
 F8::
-    SkillPanelHandler.SingleShortcutAction(8)
+    SkillPanelHandler.ShortcutAction(8)
 return
 
 F9::
@@ -141,7 +141,8 @@ F11::
 return
 
 F12::
-    BotHandler.DoSingleAssist() // Currently redundant functionality
+    BotHandler.ToogleSingleAssistMode()
+    OverlayHandler.UpdateOverLay()
 Return
 
 Up::

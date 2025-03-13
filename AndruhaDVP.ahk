@@ -89,42 +89,42 @@ Return
 
 #MaxThreadsPerHotkey 1
 F1::
-    BotHandler.DoSingleAssist(1)
+    SkillPanelHandler.SingleShortcutAction(2)
 return
 
 #MaxThreadsPerHotkey 1
 F2::
-    SkillPanelHandler.ShortcutAction(2)
+    SkillPanelHandler.SingleShortcutAction(2)
 return
 
 #MaxThreadsPerHotkey 1
 F3::
-    SkillPanelHandler.ShortcutAction(3)
+    SkillPanelHandler.SingleShortcutAction(3)
 return
 
 #MaxThreadsPerHotkey 1
 F4::
-    SkillPanelHandler.ShortcutAction(4)
+    SkillPanelHandler.SingleShortcutAction(4)
 return
 
 #MaxThreadsPerHotkey 1
 F5::
-    SkillPanelHandler.ShortcutAction(5)
+    SkillPanelHandler.SingleShortcutAction(5)
 return
 
 #MaxThreadsPerHotkey 1
 F6::
-    SkillPanelHandler.ShortcutAction(6)
+    SkillPanelHandler.SingleShortcutAction(6)
 return
 
 #MaxThreadsPerHotkey 1
 F7::
-    SkillPanelHandler.ShortcutAction(7)
+    SkillPanelHandler.SingleShortcutAction(7)
 return
 
 #MaxThreadsPerHotkey 1
 F8::
-    SkillPanelHandler.ShortcutAction(8)
+    SkillPanelHandler.SingleShortcutAction(8)
 return
 
 F9::

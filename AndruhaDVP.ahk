@@ -265,7 +265,7 @@ class SkillPanelHandler {
     FuryModeEnabled := true
     FuryShortcut := 9
     Panel1FuryShortcuts := Array(1, 3, 4, 6)
-    Panel2FuryShortcuts := Array(2, 5, 6, 7)
+    Panel2FuryShortcuts := Array(2, 3, 5, 6, 7)
     
     FirstPanelShortcut(key) {
     	this.PanelShortcut(key, key, this.Panel1FuryShortcuts)

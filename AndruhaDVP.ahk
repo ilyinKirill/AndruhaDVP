@@ -1,5 +1,5 @@
 #SingleInstance, forse
-#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
+;#IfWinActive ahk_class L2UnrealWWindowsViewportWindow
 
 ; ========================
 ; Region: Global variables and some shit from kondr-sugoi
@@ -8,6 +8,8 @@
 global ShoutMessage
 global Overlay
 global BotStatus
+global SoulshotStatus
+global SoulShotModeEnabled := false
 
 SkillPanelHandler := new SkillPanelHandler()
 BotHandler := new BotHandler()
@@ -20,10 +22,12 @@ WinTitle := "Lineage II"
 PreviousWinState := WinActive(WinTitle)
 CheckWinStateIsRunning := 0
 SkillHotKey := 3
+SoulShotHotKey := 8
 
 CheckWindowStatePeriod := 50
 UseSkillPeriod := 7*1000
 UpdateOverLayPeriod := 1000
+UseSoulShotPeriod := 500
 
 ; ========================
 ; Region: Timers
@@ -32,7 +36,9 @@ UpdateOverLayPeriod := 1000
 SetTimer, CheckWindowState, %CheckWindowStatePeriod%
 SetTimer, UpdateOverLay, %UpdateOverLayPeriod%
 SetTimer, UseSkill, %UseSkillPeriod%
+Settimer, UseSoulShot, %UseSoulShotPeriod%
 SetTimer, UseSkill, Off
+SetTimer, UseSoulShot, Off
 return
 
 ; ========================
@@ -75,6 +81,10 @@ UpdateOverLay:
     OverlayHandler.UpdateOverLay()
 return
 
+UseSoulShot:
+    SkillPanelHandler.SingleFirstPanelShortcutAction(8)
+return
+
 Submit:
     Gui, Submit, Hide
 return
@@ -89,42 +99,42 @@ Return
 
 #MaxThreadsPerHotkey 1
 F1::
-    SkillPanelHandler.SingleShortcutAction(1)
+    SkillPanelHandler.SingleSecondPanelShortcutAction(1)
 return
 
 #MaxThreadsPerHotkey 1
 F2::
-    SkillPanelHandler.SingleShortcutAction(2)
+    SkillPanelHandler.SingleSecondPanelShortcutAction(2)
 return
 
 #MaxThreadsPerHotkey 1
 F3::
-    SkillPanelHandler.SingleShortcutAction(3)
+    SkillPanelHandler.SingleSecondPanelShortcutAction(3)
 return
 
 #MaxThreadsPerHotkey 1
 F4::
-    SkillPanelHandler.SingleShortcutAction(4)
+    SkillPanelHandler.SingleSecondPanelShortcutAction(4)
 return
 
 #MaxThreadsPerHotkey 1
 F5::
-    SkillPanelHandler.SingleShortcutAction(5)
+    SkillPanelHandler.SingleSecondPanelShortcutAction(5)
 return
 
 #MaxThreadsPerHotkey 1
 F6::
-    SkillPanelHandler.SingleShortcutAction(6)
+    SkillPanelHandler.SingleSecondPanelShortcutAction(6)
 return
 
 #MaxThreadsPerHotkey 1
 F7::
-    SkillPanelHandler.SingleShortcutAction(7)
+    SkillPanelHandler.SingleSecondPanelShortcutAction(7)
 return
 
 #MaxThreadsPerHotkey 1
 F8::
-    SkillPanelHandler.SingleShortcutAction(8)
+    SkillPanelHandler.SingleSecondPanelShortcutAction(8)
 return
 
 F9::
@@ -141,8 +151,14 @@ F11::
 return
 
 F12::
-    BotHandler.DoSingleAssist() // Currently redundant functionality
-Return
+    if(SoulShotModeEnabled) {
+        SetTimer, UseSoulShot, Off
+        SoulShotModeEnabled := false
+    } else {
+        SetTimer, UseSoulShot, On
+        SoulShotModeEnabled := true
+    }
+return
 
 Up::
     ControlHandler.PreviousPosition()
@@ -167,9 +183,8 @@ class BotHandler {
 
     BotOn() {
         this.ShowNotification(this.Name, "Bot on")
-	this.IsOn := true
+	    this.IsOn := true
         SetTimer, UseSkill, On
-        OverlayHandler.ResetBotTime()
         OverlayHandler.SetBeginBotTime()
         OverlayHandler.SetCurrentBotTime()
         OverlayHandler.UpdateOverLay()
@@ -187,6 +202,7 @@ class BotHandler {
 
         this.BotOff()
         SetTimer, UseSkill, Off
+        OverlayHandler.SetTotalBotTime()
         this.ShowNotification(this.Name, "Bot off")
 	return
     }
@@ -271,7 +287,11 @@ class SkillPanelHandler {
         Send, % this.FistPanel
     }
 
-    SingleShortcutAction(shortcut) {
+    SingleFirstPanelShortcutAction(shortcut) {
+        Send, %shortcut%
+    }
+
+    SingleSecondPanelShortcutAction(shortcut) {
         Send, % this.SecondPanel
         Send, %shortcut%
         Send, % this.FistPanel
@@ -320,29 +340,33 @@ class ShoutHandler {
 class OverlayHandler {
     BeginBotTime := 0
     CurrentBotTime := 0
+    TotalBotTime := 0
 
     __New() {     
         FontSize := 17
-        WidthMargin := 500
-        FontWidth := 1000
-        TextWidth := 700
-        BotStatusTextHeight := 22
-        OverlayTextHeight := 200
-        HeightPos := 10
-        Font := "Consolas"
-        CustomColor := "282829"
+    WidthMargin := 500
+    FontWidth := 1000
+    TextWidth := 700
+    BotStatusTextHeight := 22
+    OverlayTextHeight := 200
+    HeightPos := 10
+    Font := "Consolas"
+    CustomColor := "282829"
 
-        SysGet, ScreenWidth, 0
-        SysGet, ScreenHeight, 1
-        WidthPos := ScreenWidth - WidthMargin   
-        Gui, OverlayGui: New, +AlwaysOnTop +ToolWindow -Caption
-        Gui, OverlayGui: Color, CustomColor
-        Gui, OverlayGui: Font, s%FontSize% w%FontWidth%, % Font
-        Gui, OverlayGui: Add, Text, w%TextWidth% h%BotStatusTextHeight% vBotStatus
-        Gui, OverlayGui: Add, Text, w%TextWidth% h%OverlayTextHeight% vOverlay cLime
-        Gui, OverlayGui: Show, x%WidthPos% y%HeightPos% NoActivate, OverlayWindow
-        WinSet, TransColor, CustomColor, OverlayWindow
-        this.UpdateOverLay()
+    SysGet, ScreenWidth, 0
+    SysGet, ScreenHeight, 1
+    WidthPos := ScreenWidth - WidthMargin   
+    Gui, OverlayGui: New, +AlwaysOnTop +ToolWindow -Caption
+    Gui, OverlayGui: Color, CustomColor
+    Gui, OverlayGui: Font, s%FontSize% w%FontWidth%, % Font
+    Gui, OverlayGui: Margin, , 1
+    Gui, OverlayGui: Add, Text, w%TextWidth% h%BotStatusTextHeight% vBotStatus
+    Gui, OverlayGui: Add, Text, w%TextWidth% h%BotStatusTextHeight% vSoulshotStatus
+    Gui, OverlayGui: Add, Text, w%TextWidth% h%OverlayTextHeight% vOverlay cLime
+
+    Gui, OverlayGui: Show, x%WidthPos% y%HeightPos% NoActivate, OverlayWindow
+    WinSet, TransColor, CustomColor, OverlayWindow
+    this.UpdateOverLay()
     }
 
     SetBeginBotTime() {
@@ -350,10 +374,11 @@ class OverlayHandler {
     }
 
     SetCurrentBotTime() {
-        if (BotHandler.IsOn){
-            this.CurrentBotTime := A_TickCount
-            result := this.CurrentBotTime - this.BeginBotTime
-        }
+        this.CurrentBotTime := A_TickCount + this.TotalBotTime
+    }
+
+    SetTotalBotTime() {
+        this.TotalBotTime := this.CurrentBotTime - this.BeginBotTime
     }
 
     GetCurrentTime(){
@@ -364,33 +389,48 @@ class OverlayHandler {
     GetTimeInFormat(timeInMs) {
         seconds := Floor(timeInMs // 1000)
         minutes := seconds // 60
+        hours := minutes // 60
         remainingSeconds := Mod(seconds, 60)
+        remainingMinutes := Mod(minutes, 60)
     
-        FormattedMinutes := Format("{:02}", minutes)
         FormattedSeconds := Format("{:02}", remainingSeconds)
+        FormattedMinutes := Format("{:02}", remainingMinutes)
+        FormattedHours := Format("{:02}", hours)
     
-        return FormattedMinutes . ":" . FormattedSeconds
+        return FormattedHours . ":" . FormattedMinutes . ":" . FormattedSeconds
     }
 
     UpdateOverLay() {
-        this.UpdateOverlayInfo(BotHandler.IsOn, this.GetTimeInFormat(this.CurrentBotTime - this.BeginBotTime), this.GetCurrentTime(), ControlHandler.MaPosition)
+        this.UpdateOverlayInfo(BotHandler.IsOn, this.GetTimeInFormat(this.CurrentBotTime - this.BeginBotTime), this.GetCurrentTime())
     }
 
-    UpdateOverlayInfo(isBotOn, elapsedTime, currentTime, maPosition){
+    UpdateOverlayInfo(isBotOn, elapsedTime, currentTime){
         botStatus := (isBotOn ? "ON" : "OFF") 
-        botStatusText := BotHandler.Name . " " . A_Tab . botStatus
+        soulshotStatus := (SoulShotModeEnabled ? "ON" : "OFF") 
+
+        botStatusText := BotHandler.Name . A_Tab . botStatus
+        soulshotStatusText := "Soulshot Mode" . A_Tab . soulshotStatus
+
         botStatusColor := (isBotOn ? "Lime" : "Red")
+        soulshotColor := (SoulShotModeEnabled ? "Lime" : "Red")
 
         elapsedTimeText := "Elapsed time: " . A_Tab . elapsedTime
         currentTimeText := "Current time: " . A_Tab . currentTime
-        maText := "MA position: " . A_Tab . maPosition
         separatingLine := "---------------------"
-        overlayText := elapsedTimeText . "`n" . maText . "`n" . separatingLine . "`n" . currentTimeText
+        overlayText := elapsedTimeText . "`n" . separatingLine . "`n" . currentTimeText
 
-        Gui, OverlayGui:Font, c%botStatusColor% ; Set the new font color
-        GuiControl, OverlayGui:Font, BotStatus ; Apply the new font color to the control
-        GuiControl, OverlayGui:, BotStatus, %botStatusText% ; Update bot status text
-        GuiControl, OverlayGui:, Overlay, %overlayText% ; Update other overlay text
+        ; Update BotStatus
+        GuiControl, OverlayGui:, BotStatus, %botStatusText%
+        Gui, OverlayGui: Font, c%botStatusColor%
+        GuiControl, OverlayGui: Font, BotStatus
+
+        ; Update SoulshotStatus
+        GuiControl, OverlayGui:, SoulshotStatus, %soulshotStatusText%
+        Gui, OverlayGui: Font, c%soulshotColor%
+        GuiControl, OverlayGui: Font, SoulshotStatus
+
+        ; Update other overlay text
+        GuiControl, OverlayGui:, Overlay, %overlayText%
         return
     }
 

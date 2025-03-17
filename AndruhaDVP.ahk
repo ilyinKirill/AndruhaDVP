@@ -159,12 +159,8 @@ class BotHandler {
     TimeoutPerClick := 50 ; timeout per click
 
     BotOn() {
-        this.ShowNotification(this.Name, "Bot on")
 	this.IsOn := true
         SetTimer, UseSkill, On
-        OverlayHandler.ResetBotTime()
-        OverlayHandler.SetBeginBotTime()
-        OverlayHandler.SetCurrentBotTime()
         OverlayHandler.UpdateOverLay()
 
 	while (!ControlHandler.IsManual()) {
@@ -180,7 +176,6 @@ class BotHandler {
 
         this.BotOff()
         SetTimer, UseSkill, Off
-        this.ShowNotification(this.Name, "Bot off")
 	return
     }
 
@@ -218,27 +213,16 @@ class ControlHandler {
     SafeZoneX := 40
     SafeZoneY := 15
     MemberDistance := 34
-    MaPosition := 1
 
     NextPosition() {
         this.AxisY := (this.AxisY > 564) ? 598 : this.AxisY += this.MemberDistance
         this.MoveCoursor(this.AxisX, this.AxisY)
-
-        if !(this.MaPosition >= 8) {
-            this.MaPosition += 1
-        }        
-        
         return
     }
 
     PreviousPosition() {
         this.AxisY := (this.AxisY < 394) ? 360 : this.AxisY -= this.MemberDistance
         this.MoveCoursor(this.AxisX, this.AxisY)
-
-        if !(this.MaPosition <= 1) {
-            this.MaPosition -= 1
-        }
-
         return
     }
     
@@ -315,7 +299,6 @@ class SkillPanelHandler {
 }
 
 class ShoutHandler {
-    ShoutTimeout := 2*60*1000
     GuiBackgroundColor := "242729"
     FontSize := "s12"
     Font := "Arial"
@@ -354,8 +337,6 @@ class ShoutHandler {
 }
 
 class OverlayHandler {
-    BeginBotTime := 0
-    CurrentBotTime := 0
 
     __New() {     
         FontSize := 17
@@ -381,17 +362,6 @@ class OverlayHandler {
         this.UpdateOverLay()
     }
 
-    SetBeginBotTime() {
-        this.BeginBotTime := A_TickCount
-    }
-
-    SetCurrentBotTime() {
-        if (BotHandler.IsOn){
-            this.CurrentBotTime := A_TickCount
-            result := this.CurrentBotTime - this.BeginBotTime
-        }
-    }
-
     GetCurrentTime(){
         FormatTime, currentTime, , HH:mm
         return currentTime
@@ -409,31 +379,24 @@ class OverlayHandler {
     }
 
     UpdateOverLay() {
-        this.UpdateOverlayInfo(BotHandler.IsOn, BotHandler.SingleAssistMode, SkillPanelHandler.FuryModeEnabled, this.GetTimeInFormat(this.CurrentBotTime - this.BeginBotTime), this.GetCurrentTime(), ControlHandler.MaPosition)
+        this.UpdateOverlayInfo(BotHandler.IsOn, BotHandler.SingleAssistMode, SkillPanelHandler.FuryModeEnabled, this.GetCurrentTime())
     }
 
-    UpdateOverlayInfo(isBotOn, singleAssistMode, furyMode, elapsedTime, currentTime, maPosition){
+    UpdateOverlayInfo(isBotOn, singleAssistMode, furyMode, currentTime){
         botStatus := (isBotOn ? "ON" : "OFF") 
         botStatusText := BotHandler.Name . " " . A_Tab . botStatus
         botStatusColor := (isBotOn ? "Lime" : "Red")
 
-        elapsedTimeText := "Elapsed time: " . A_Tab . elapsedTime
         currentTimeText := "Current time: " . A_Tab . currentTime
-        maText := "MA position: " . A_Tab . maPosition
         separatingLine := "---------------------"
         SingleAssistModeText := "Single Assist:" . A_Tab . (singleAssistMode ? "ON" : "OFF")
         FuryModeText := "Fury Mode:" . A_Tab . (furyMode ? "ON" : "OFF")
-        overlayText := elapsedTimeText . "`n" . maText . "`n" . SingleAssistModeText . "`n" . FuryModeText . "`n" . separatingLine . "`n" . currentTimeText
+        overlayText := SingleAssistModeText . "`n" . FuryModeText . "`n" . separatingLine . "`n" . currentTimeText
 
         Gui, OverlayGui:Font, c%botStatusColor% ; Set the new font color
         GuiControl, OverlayGui:Font, BotStatus ; Apply the new font color to the control
         GuiControl, OverlayGui:, BotStatus, %botStatusText% ; Update bot status text
         GuiControl, OverlayGui:, Overlay, %overlayText% ; Update other overlay text
         return
-    }
-
-    ResetBotTime(){
-        this.CurrentBotTime := 0
-        this.BeginBotTime := 0
     }
 }

@@ -22,8 +22,8 @@ CheckWinStateIsRunning := 0
 SkillHotKey := 3
 
 CheckWindowStatePeriod := 50
-UseSkillPeriod := 7*1000
-UpdateOverLayPeriod := 1000
+UseSkillPeriod := 20*1000
+UpdateOverLayPeriod := 500
 
 ; ========================
 ; Region: Timers
@@ -127,12 +127,17 @@ F11::
 return
 
 F12::
-    BotHandler.ToogleSingleAssistMode()
+    SkillPanelHandler.ToogleFuryMode()
     OverlayHandler.UpdateOverLay()
 Return
 
 +F12::
-    SkillPanelHandler.ToogleFuryMode()
+    SkillPanelHandler.ToogleSoulshotMode()
+    OverlayHandler.UpdateOverLay()
+Return
+
+^F12::
+    BotHandler.ToogleSingleAssistMode()
     OverlayHandler.UpdateOverLay()
 Return
 
@@ -203,7 +208,6 @@ class BotHandler {
     BotOff() {
         this.IsOn := false
 	this.TotalElapsedTime += A_TickCount - this.BotStartedAt
-	this.BotStartedAt := 0
         return
     }
 
@@ -212,7 +216,7 @@ class BotHandler {
     }
 
     GetCurrentSessionTime() {
-	if(!this.IsOn) {
+	if (!this.IsOn) {
 	    return 0
 	}
 	sessionTime := A_TickCount - this.BotStartedAt
@@ -259,6 +263,9 @@ class SkillPanelHandler {
     LoopIterationTimeout := 50
     FistPanel := "!1"
     SecondPanel := "!2"
+    SoulshotModeEnabled := false
+    SoulshotShortcut := 5
+    AttackShortcut := 2
     FuryModeEnabled := true
     FuryShortcut := 9
     Panel1FuryShortcuts := Array(1, 3, 4, 6)
@@ -276,16 +283,13 @@ class SkillPanelHandler {
     }
 
     PanelShortcut(shortcut, key, furyShortcuts) {
-    	if (this.FuryEnabled(shortcut, furyShortcuts)) {
-    	    Send, % this.FuryShortcut
-	}
+    	this.UseFury(shortcut, furyShortcuts)
         while GetKeyState(key, "P") {
+            this.UseSoulshot(key)
             Send, %shortcut%
             Sleep, % this.LoopIterationTimeout
         }
-    	if (this.FuryEnabled(shortcut, furyShortcuts)) {
-    	    Send, % this.FuryShortcut
-	}
+    	this.UseFury(shortcut, furyShortcuts)
     }
 
     SecondPanelSingleShortcut(shortcut) {
@@ -294,8 +298,20 @@ class SkillPanelHandler {
         Send, % this.FistPanel
     }
 
+    UseFury(shortcut, furyShortcuts) {
+    	if (this.FuryEnabled(shortcut, furyShortcuts)) {
+    	    Send, % this.FuryShortcut
+	}
+    }
+
+    UseSoulshot(shortcut) {
+    	if (this.SoulshotEnabled(shortcut)) {
+    	    Send, % this.SoulshotShortcut
+	}
+    }
+
     FuryEnabled(shortcut, furyShortcuts) {
-	if(!this.FuryModeEnabled) {
+	if (!this.FuryModeEnabled) {
 	    return false
         }
         for index, value in furyShortcuts {
@@ -306,8 +322,16 @@ class SkillPanelHandler {
         return false
     }
 
+    SoulshotEnabled(shortcut) {
+	return this.SoulshotModeEnabled && this.AttackShortcut = shortcut
+    }
+
     ToogleFuryMode() {
         this.FuryModeEnabled := !this.FuryModeEnabled
+    }
+
+    ToogleSoulshotMode() {
+        this.SoulshotModeEnabled := !this.SoulshotModeEnabled
     }
 }
 
@@ -392,10 +416,10 @@ class OverlayHandler {
     }
 
     UpdateOverLay() {
-        this.UpdateOverlayInfo(BotHandler.IsOn, BotHandler.SingleAssistMode, SkillPanelHandler.FuryModeEnabled, this.GetTimeInFormat(BotHandler.GetTotalTime()), this.GetCurrentTime())
+        this.UpdateOverlayInfo(BotHandler.IsOn, BotHandler.SingleAssistMode, SkillPanelHandler.FuryModeEnabled, SkillPanelHandler.SoulshotModeEnabled, this.GetTimeInFormat(BotHandler.GetTotalTime()), this.GetCurrentTime())
     }
 
-    UpdateOverlayInfo(isBotOn, singleAssistMode, furyMode, elapsedTime, currentTime){
+    UpdateOverlayInfo(isBotOn, singleAssistMode, furyMode, soulshotMode, elapsedTime, currentTime){
         botStatus := (isBotOn ? "ON" : "OFF") 
         botStatusText := BotHandler.Name . " " . A_Tab . botStatus
         botStatusColor := (isBotOn ? "Lime" : "Red")
@@ -403,9 +427,12 @@ class OverlayHandler {
 	elapsedTimeText := "Elapsed time: " . A_Tab . elapsedTime
         currentTimeText := "Current time: " . A_Tab . currentTime
         separatingLine := "---------------------"
-        SingleAssistModeText := "Single Assist:" . A_Tab . (singleAssistMode ? "ON" : "OFF")
-        FuryModeText := "Fury Mode:" . A_Tab . (furyMode ? "ON" : "OFF")
-        overlayText := elapsedTimeText . "`n" . SingleAssistModeText . "`n" . FuryModeText . "`n" . separatingLine . "`n" . currentTimeText
+
+        furyModeText := "Fury Mode:" . A_Tab . (furyMode ? "ON" : "OFF")
+        soulshotModeText := "Soulshot Mode:" . A_Tab . (soulshotMode ? "ON" : "OFF")
+        singleAssistModeText := "Single Assist:" . A_Tab . (singleAssistMode ? "ON" : "OFF")
+
+        overlayText := elapsedTimeText  . "`n" . furyModeText . "`n" . soulshotModeText . "`n" . singleAssistModeText . "`n" . separatingLine . "`n" . currentTimeText
 
         Gui, OverlayGui:Font, c%botStatusColor% ; Set the new font color
         GuiControl, OverlayGui:Font, BotStatus ; Apply the new font color to the control

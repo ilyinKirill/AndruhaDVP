@@ -157,9 +157,12 @@ class BotHandler {
     MinTimeout := 200 ; Min timeout per assist
     MaxTimeout := 2000 ; Max timeout per assist
     TimeoutPerClick := 50 ; timeout per click
+    TotalElapsedTime := 0
+    BotStartedAt := 0
 
     BotOn() {
 	this.IsOn := true
+	this.BotStartedAt := A_TickCount
         SetTimer, UseSkill, On
         OverlayHandler.UpdateOverLay()
 
@@ -175,6 +178,8 @@ class BotHandler {
         }
 
         this.BotOff()
+	;time := OverlayHandler.GetTimeInFormat(this.TotalElapsedTime)
+	;MsgBox, %time%
         SetTimer, UseSkill, Off
 	return
     }
@@ -199,11 +204,21 @@ class BotHandler {
 
     BotOff() {
         this.IsOn := false
+	this.TotalElapsedTime += A_TickCount - this.BotStartedAt
+	this.BotStartedAt := 0
         return
     }
-    
-    ShowNotification(title, text) {
-        TrayTip, %title%, %text%, 2, 2
+
+    GetTotalTime() {
+	return this.TotalElapsedTime + this.GetCurrentSessionTime()
+    }
+
+    GetCurrentSessionTime() {
+	if(!this.IsOn) {
+	    return 0
+	}
+	sessionTime := A_TickCount - this.BotStartedAt
+        return sessionTime
     }
 }
 
@@ -379,19 +394,20 @@ class OverlayHandler {
     }
 
     UpdateOverLay() {
-        this.UpdateOverlayInfo(BotHandler.IsOn, BotHandler.SingleAssistMode, SkillPanelHandler.FuryModeEnabled, this.GetCurrentTime())
+        this.UpdateOverlayInfo(BotHandler.IsOn, BotHandler.SingleAssistMode, SkillPanelHandler.FuryModeEnabled, this.GetTimeInFormat(BotHandler.GetTotalTime()), this.GetCurrentTime())
     }
 
-    UpdateOverlayInfo(isBotOn, singleAssistMode, furyMode, currentTime){
+    UpdateOverlayInfo(isBotOn, singleAssistMode, furyMode, elapsedTime, currentTime){
         botStatus := (isBotOn ? "ON" : "OFF") 
         botStatusText := BotHandler.Name . " " . A_Tab . botStatus
         botStatusColor := (isBotOn ? "Lime" : "Red")
 
+	elapsedTimeText := "Elapsed time: " . A_Tab . elapsedTime
         currentTimeText := "Current time: " . A_Tab . currentTime
         separatingLine := "---------------------"
         SingleAssistModeText := "Single Assist:" . A_Tab . (singleAssistMode ? "ON" : "OFF")
         FuryModeText := "Fury Mode:" . A_Tab . (furyMode ? "ON" : "OFF")
-        overlayText := SingleAssistModeText . "`n" . FuryModeText . "`n" . separatingLine . "`n" . currentTimeText
+        overlayText := elapsedTimeText . "`n" . SingleAssistModeText . "`n" . FuryModeText . "`n" . separatingLine . "`n" . currentTimeText
 
         Gui, OverlayGui:Font, c%botStatusColor% ; Set the new font color
         GuiControl, OverlayGui:Font, BotStatus ; Apply the new font color to the control

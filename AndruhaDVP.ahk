@@ -178,8 +178,6 @@ class BotHandler {
         }
 
         this.BotOff()
-	;time := OverlayHandler.GetTimeInFormat(this.TotalElapsedTime)
-	;MsgBox, %time%
         SetTimer, UseSkill, Off
 	return
     }

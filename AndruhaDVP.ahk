@@ -22,8 +22,8 @@ CheckWinStateIsRunning := 0
 SkillHotKey := 3
 
 CheckWindowStatePeriod := 50
-UseSkillPeriod := 20*1000
-UpdateOverLayPeriod := 500
+UseSkillPeriod := 30*1000
+UpdateOverLayPeriod := 800
 
 ; ========================
 ; Region: Timers
@@ -48,6 +48,7 @@ CheckWindowState:
         CurrentState := WinActive(WinTitle)
 
         if (CurrentState && !PreviousWinState) {
+            Gui, OverlayGui: Show, NoActivate
             PreviousWinState := 1
             Send, {Home}
             Send, //
@@ -55,6 +56,7 @@ CheckWindowState:
             Send, {Ctrl}
         }
         else if (!CurrentState) {
+            Gui, OverlayGui: Hide
             PreviousWinState := 0
         }
     }
@@ -419,7 +421,7 @@ class OverlayHandler {
         this.UpdateOverlayInfo(BotHandler.IsOn, BotHandler.SingleAssistMode, SkillPanelHandler.FuryModeEnabled, SkillPanelHandler.SoulshotModeEnabled, this.GetTimeInFormat(BotHandler.GetTotalTime()), this.GetCurrentTime())
     }
 
-    UpdateOverlayInfo(isBotOn, singleAssistMode, furyMode, soulshotMode, elapsedTime, currentTime){
+    UpdateOverlayInfo(isBotOn, singleAssistMode, furyMode, soulshotMode, elapsedTime, currentTime) {
         botStatus := (isBotOn ? "ON" : "OFF") 
         botStatusText := BotHandler.Name . " " . A_Tab . botStatus
         botStatusColor := (isBotOn ? "Lime" : "Red")

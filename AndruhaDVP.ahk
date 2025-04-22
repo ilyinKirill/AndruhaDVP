@@ -22,8 +22,8 @@ CheckWinStateIsRunning := 0
 SkillHotKey := 3
 
 CheckWindowStatePeriod := 50
-UseSkillPeriod := 30*1000
-UpdateOverLayPeriod := 800
+UseSkillPeriod := 18*1000
+UpdateOverLayPeriod := 1000
 
 ; ========================
 ; Region: Timers
@@ -210,6 +210,7 @@ class BotHandler {
     BotOff() {
         this.IsOn := false
 	this.TotalElapsedTime += A_TickCount - this.BotStartedAt
+	OverlayHandler.UpdateOverLay()
         return
     }
 
@@ -266,12 +267,12 @@ class SkillPanelHandler {
     FistPanel := "!1"
     SecondPanel := "!2"
     SoulshotModeEnabled := false
-    SoulshotShortcut := 5
+    SoulshotShortcut := 6
     AttackShortcut := 2
     FuryModeEnabled := true
-    FuryShortcut := 9
-    Panel1FuryShortcuts := Array(1, 3, 4, 6)
-    Panel2FuryShortcuts := Array(2, 3, 5, 6, 7)
+    FuryShortcut := 0
+    Panel1FuryShortcuts := Array(1, 2, 3, 4, 5)
+    Panel2FuryShortcuts := Array(2, 3, 5, 6, 7, 8)
     
     FirstPanelShortcut(key) {
     	this.PanelShortcut(key, key, this.Panel1FuryShortcuts)
@@ -409,12 +410,15 @@ class OverlayHandler {
     GetTimeInFormat(timeInMs) {
         seconds := Floor(timeInMs // 1000)
         minutes := seconds // 60
+        hours := minutes // 60
         remainingSeconds := Mod(seconds, 60)
+        remainingMinutes := Mod(minutes, 60)
     
-        FormattedMinutes := Format("{:02}", minutes)
         FormattedSeconds := Format("{:02}", remainingSeconds)
+        FormattedMinutes := Format("{:02}", remainingMinutes)
+        FormattedHours := Format("{:02}", hours)
     
-        return FormattedMinutes . ":" . FormattedSeconds
+        return FormattedHours . ":" . FormattedMinutes . ":" . FormattedSeconds
     }
 
     UpdateOverLay() {

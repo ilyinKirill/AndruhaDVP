@@ -100,19 +100,18 @@ Return
 return
 
 #MaxThreadsPerHotkey 1
-F1::
-    BotHandler.DoSingleAssist(1)
-return
-
-#MaxThreadsPerHotkey 1
 F2::
 F3::
 F4::
 F5::
 F6::
 F7::
-F8::
     SkillPanelHandler.SecondPanelShortcut(A_ThisHotkey)
+return
+
+F1::
+F8::
+    SkillPanelHandler.SecondPanelShortcutSingle(A_ThisHotkey)
 return
 
 F9::
@@ -133,13 +132,14 @@ F12::
     OverlayHandler.UpdateOverLay()
 Return
 
+Tab::
+    Send, {Enter}
+    SendInput, /targetnext
+    Send, {Enter}
+return
+
 +F12::
     SkillPanelHandler.ToogleSoulshotMode()
-    OverlayHandler.UpdateOverLay()
-Return
-
-^F12::
-    BotHandler.ToogleSingleAssistMode()
     OverlayHandler.UpdateOverLay()
 Return
 
@@ -160,7 +160,6 @@ return
 class BotHandler {
     Name := "AndruhaDVP"
     IsOn := false
-    SingleAssistMode := false
     MinTimeout := 200 ; Min timeout per assist
     MaxTimeout := 2000 ; Max timeout per assist
     TimeoutPerClick := 50 ; timeout per click
@@ -187,24 +186,6 @@ class BotHandler {
         this.BotOff()
         SetTimer, UseSkill, Off
 	return
-    }
-
-    DoSingleAssist(shortcut) {
-        if (this.SingleAssistMode) {
-            MouseGetPos, xpos, ypos
-            ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
-            Send, {Click Right}
-            Sleep, this.TimeoutPerClick
-            Send, {Click Right}
-            ControlHandler.MoveCoursor(xpos, ypos)
-        }
-        else {
-            SkillPanelHandler.SecondPanelSingleShortcut(shortcut)
-        }
-    }
-
-    ToogleSingleAssistMode() {
-        this.SingleAssistMode := !this.SingleAssistMode
     }
 
     BotOff() {
@@ -267,13 +248,20 @@ class SkillPanelHandler {
     FistPanel := "!1"
     SecondPanel := "!2"
     SoulshotModeEnabled := false
-    SoulshotShortcut := 6
+    SoulshotShortcut := 8
     AttackShortcut := 2
     FuryModeEnabled := true
     FuryShortcut := 0
     Panel1FuryShortcuts := Array(1, 2, 3, 4, 5)
     Panel2FuryShortcuts := Array(2, 3, 5, 6, 7, 8)
     
+    SecondPanelShortcutSingle(key) {
+        Send, % this.SecondPanel
+        shortcut := SubStr(key, 2)
+        Send, %shortcut%
+        Send, % this.FistPanel
+    }
+
     FirstPanelShortcut(key) {
     	this.PanelShortcut(key, key, this.Panel1FuryShortcuts)
     }
@@ -349,13 +337,14 @@ class ShoutHandler {
         ButtonWidth := 80
         ButtonHeight := 23
         SubmitButtonX := 50
-        SubmitButtonY := 50
+        SubmitButtonY := 90
         CancelButtonX := 170
-        CancelButtonY := 50
+        CancelButtonY := 90
 
         Gui, ShoutGui: New, +AlwaysOnTop -Caption +ToolWindow
         Gui, ShoutGui: Color, % this.GuiBackgroundColor
         Gui, ShoutGui: Font, % this.FontSize, % this.Font
+        Gui, ShoutGui: Add, Text, w%InputControlWidth% h%InputControlHeight% cFFFFFF, Shout Message:
         Gui, ShoutGui: Add, Edit, vShoutMessage w%InputControlWidth% h%InputControlHeight%
         Gui, ShoutGui: Add, Button, w%ButtonWidth% h%ButtonHeight% gSubmit x%SubmitButtonX% y%SubmitButtonY% +Center, Submit
         Gui, ShoutGui: Add, Button, w%ButtonWidth% h%ButtonHeight% gCancel x%CancelButtonX% y%CancelButtonY% +Center, Cancel
@@ -363,7 +352,7 @@ class ShoutHandler {
 
     GetMessageFromUser() {
         GuiWidth := 300
-        GuiHeight := 100
+        GuiHeight := 130
 
         Gui, ShoutGui: Show, w%GuiWidth% h%GuiHeight%, Shout Window
     }
@@ -371,7 +360,7 @@ class ShoutHandler {
     Shout(){
         GuiControlGet, ShoutMessage,, ShoutMessage
         Send, {Enter}
-        SendRaw, % ShoutMessage
+        SendInput, % ShoutMessage
         Send, {Enter}
     }
 }
@@ -422,10 +411,10 @@ class OverlayHandler {
     }
 
     UpdateOverLay() {
-        this.UpdateOverlayInfo(BotHandler.IsOn, BotHandler.SingleAssistMode, SkillPanelHandler.FuryModeEnabled, SkillPanelHandler.SoulshotModeEnabled, this.GetTimeInFormat(BotHandler.GetTotalTime()), this.GetCurrentTime())
+        this.UpdateOverlayInfo(BotHandler.IsOn, SkillPanelHandler.FuryModeEnabled, SkillPanelHandler.SoulshotModeEnabled, this.GetTimeInFormat(BotHandler.GetTotalTime()), this.GetCurrentTime())
     }
 
-    UpdateOverlayInfo(isBotOn, singleAssistMode, furyMode, soulshotMode, elapsedTime, currentTime) {
+    UpdateOverlayInfo(isBotOn, furyMode, soulshotMode, elapsedTime, currentTime) {
         botStatus := (isBotOn ? "ON" : "OFF") 
         botStatusText := BotHandler.Name . " " . A_Tab . botStatus
         botStatusColor := (isBotOn ? "Lime" : "Red")
@@ -436,9 +425,8 @@ class OverlayHandler {
 
         furyModeText := "Fury Mode:" . A_Tab . (furyMode ? "ON" : "OFF")
         soulshotModeText := "Soulshot Mode:" . A_Tab . (soulshotMode ? "ON" : "OFF")
-        singleAssistModeText := "Single Assist:" . A_Tab . (singleAssistMode ? "ON" : "OFF")
 
-        overlayText := elapsedTimeText  . "`n" . furyModeText . "`n" . soulshotModeText . "`n" . singleAssistModeText . "`n" . separatingLine . "`n" . currentTimeText
+        overlayText := elapsedTimeText  . "`n" . furyModeText . "`n" . soulshotModeText . "`n" .  separatingLine . "`n" . currentTimeText
 
         Gui, OverlayGui:Font, c%botStatusColor% ; Set the new font color
         GuiControl, OverlayGui:Font, BotStatus ; Apply the new font color to the control

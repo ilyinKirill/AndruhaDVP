@@ -142,11 +142,14 @@ return
     ChatHandler.GetMainAssistFromUser()
 return
 
-SC029::
-    targetCommand := "/target " . MainAssist
-    ChatHandler.SendChatCommand(targetCommand)
-    Sleep, 50
-    ChatHandler.SendChatCommand("/assist")
+~SC029::
+    PixelGetColor, color, 46, 1426
+    if (color = 0x1E1D1E) {
+        targetCommand := "/target " . MainAssist
+        ChatHandler.SendChatCommand(targetCommand)
+        Sleep, 50
+        ChatHandler.SendChatCommand("/assist")
+    }
 return
 
 +F12::

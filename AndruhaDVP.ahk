@@ -6,13 +6,14 @@
 ; ========================
 
 global ShoutMessage
+global MainAssist
 global Overlay
 global BotStatus
 
 SkillPanelHandler := new SkillPanelHandler()
 BotHandler := new BotHandler()
 ControlHandler := new ControlHandler()
-ShoutHandler := new ShoutHandler()
+ChatHandler := new ChatHandler()
 OverlayHandler := new OverlayHandler()
 
 ;This shit provided by kondr-sugoi
@@ -115,11 +116,11 @@ F8::
 return
 
 F9::
-    ShoutHandler.Shout()
+    ChatHandler.Shout()
 return
 
 F10::
-    ShoutHandler.GetMessageFromUser()
+    ChatHandler.GetMessageFromUser()
 return
 
 F11::
@@ -133,9 +134,19 @@ F12::
 Return
 
 Tab::
-    Send, {Enter}
-    SendInput, /targetnext
-    Send, {Enter}
+    command := "/targetnext"
+    ChatHandler.SendChatCommand(command)
+return
+
++SC029::
+    ChatHandler.GetMainAssistFromUser()
+return
+
+SC029::
+    targetCommand := "/target " . MainAssist
+    ChatHandler.SendChatCommand(targetCommand)
+    Sleep, 50
+    ChatHandler.SendChatCommand("/assist")
 return
 
 +F12::
@@ -326,7 +337,7 @@ class SkillPanelHandler {
     }
 }
 
-class ShoutHandler {
+class ChatHandler {
     GuiBackgroundColor := "242729"
     FontSize := "s12"
     Font := "Arial"
@@ -348,6 +359,14 @@ class ShoutHandler {
         Gui, ShoutGui: Add, Edit, vShoutMessage w%InputControlWidth% h%InputControlHeight%
         Gui, ShoutGui: Add, Button, w%ButtonWidth% h%ButtonHeight% gSubmit x%SubmitButtonX% y%SubmitButtonY% +Center, Submit
         Gui, ShoutGui: Add, Button, w%ButtonWidth% h%ButtonHeight% gCancel x%CancelButtonX% y%CancelButtonY% +Center, Cancel
+
+        Gui, MaGui: New, +AlwaysOnTop -Caption +ToolWindow
+        Gui, MaGui: Color, % this.GuiBackgroundColor
+        Gui, MaGui: Font, % this.FontSize, % this.Font
+        Gui, MaGui: Add, Text, w%InputControlWidth% h%InputControlHeight% cFFFFFF, Main Assist Nickname:
+        Gui, MaGui: Add, Edit, vMainAssist w%InputControlWidth% h%InputControlHeight%
+        Gui, MaGui: Add, Button, w%ButtonWidth% h%ButtonHeight% gSubmit x%SubmitButtonX% y%SubmitButtonY% +Center, Submit
+        Gui, MaGui: Add, Button, w%ButtonWidth% h%ButtonHeight% gCancel x%CancelButtonX% y%CancelButtonY% +Center, Cancel
     }
 
     GetMessageFromUser() {
@@ -357,10 +376,23 @@ class ShoutHandler {
         Gui, ShoutGui: Show, w%GuiWidth% h%GuiHeight%, Shout Window
     }
 
-    Shout(){
+    GetMainAssistFromUser() {
+        GuiWidth := 300
+        GuiHeight := 130
+
+        Gui, MaGui: Show, w%GuiWidth% h%GuiHeight%, Main Assist Window
+    }
+
+    Shout() {
         GuiControlGet, ShoutMessage,, ShoutMessage
         Send, {Enter}
         SendInput, % ShoutMessage
+        Send, {Enter}
+    }
+
+    SendChatCommand(command) {
+        Send, {Enter}
+        SendInput, %command%
         Send, {Enter}
     }
 }

@@ -23,7 +23,7 @@ CheckWinStateIsRunning := 0
 SkillHotKey := 3
 
 CheckWindowStatePeriod := 50
-UseSkillPeriod := 18*1000
+UseSkillPeriod := 15*1000
 UpdateOverLayPeriod := 1000
 
 ; ========================
@@ -101,6 +101,7 @@ Return
 return
 
 #MaxThreadsPerHotkey 1
+F1::
 F2::
 F3::
 F4::
@@ -110,7 +111,6 @@ F7::
     SkillPanelHandler.SecondPanelShortcut(A_ThisHotkey)
 return
 
-F1::
 F8::
     SkillPanelHandler.SecondPanelShortcutSingle(A_ThisHotkey)
 return
@@ -133,23 +133,22 @@ F12::
     OverlayHandler.UpdateOverLay()
 Return
 
-Tab::
-    command := "/targetnext"
-    ChatHandler.SendChatCommand(command)
+~SC029::
+    if (ChatHandler.ChatIsInactive()) {
+        command := "/targetnext"
+        ChatHandler.SendChatCommand(command)
+    }
 return
 
 +SC029::
     ChatHandler.GetMainAssistFromUser()
 return
 
-~SC029::
-    PixelGetColor, color, 46, 1426
-    if (color = 0x1E1D1E) {
-        targetCommand := "/target " . MainAssist
-        ChatHandler.SendChatCommand(targetCommand)
-        Sleep, 50
-        ChatHandler.SendChatCommand("/assist")
-    }
+^SC029::
+    targetCommand := "/target " . MainAssist
+    ChatHandler.SendChatCommand(targetCommand)
+    Sleep, 50
+    ChatHandler.SendChatCommand("/assist")
 return
 
 +F12::
@@ -158,13 +157,23 @@ return
 Return
 
 Up::
-    ControlHandler.PreviousPosition()
-    OverlayHandler.UpdateOverLay()
+    if (ChatHandler.ChatIsInactive()) {
+        ControlHandler.PreviousPosition()
+        OverlayHandler.UpdateOverLay()
+    }
+    else {
+        Send, {Up}
+    }
 return
 
 Down::
-    ControlHandler.NextPosition()
-    OverlayHandler.UpdateOverLay()
+    if (ChatHandler.ChatIsInactive()) {
+        ControlHandler.NextPosition()
+        OverlayHandler.UpdateOverLay()
+    }
+    else {
+        Send, {Down}
+    }
 return
 
 ; ========================
@@ -267,7 +276,7 @@ class SkillPanelHandler {
     FuryModeEnabled := true
     FuryShortcut := 0
     Panel1FuryShortcuts := Array(1, 2, 3, 4, 5)
-    Panel2FuryShortcuts := Array(2, 3, 5, 6, 7, 8)
+    Panel2FuryShortcuts := Array(1, 2, 3, 5, 6, 7, 8)
     
     SecondPanelShortcutSingle(key) {
         Send, % this.SecondPanel
@@ -277,7 +286,12 @@ class SkillPanelHandler {
     }
 
     FirstPanelShortcut(key) {
-    	this.PanelShortcut(key, key, this.Panel1FuryShortcuts)
+        if (ChatHandler.ChatIsInactive()) {
+    	    this.PanelShortcut(key, key, this.Panel1FuryShortcuts)
+        }
+        else {
+            SendInput, %key%
+        }
     }
 
     SecondPanelShortcut(key) {
@@ -397,6 +411,11 @@ class ChatHandler {
         Send, {Enter}
         SendInput, %command%
         Send, {Enter}
+    }
+
+    ChatIsInactive() {
+        PixelGetColor, color, 46, 1426
+        return color = 0x1E1D1E
     }
 }
 

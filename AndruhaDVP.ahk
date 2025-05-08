@@ -179,7 +179,6 @@ class BotHandler {
     IsOn := false
     MinTimeout := 200 ; Min timeout per assist
     MaxTimeout := 2000 ; Max timeout per assist
-    TimeoutPerClick := 50 ; timeout per click
     TotalElapsedTime := 0
     BotStartedAt := 0
 
@@ -210,29 +209,6 @@ class BotHandler {
 	this.IsOn := false
 	this.TotalElapsedTime += A_TickCount - this.BotStartedAt
 	OverlayHandler.UpdateOverLay()
-    }
-
-    BotOnChatCommands() {
-	this.IsOn := true
-	this.BotStartedAt := A_TickCount
-        OverlayHandler.UpdateOverLay()
-
-	while (this.IsOn) {
-	    ChatHandler.AssistAttack()
-	    Random, rand, this.MinTimeout, this.MaxTimeout
-	    Sleep, rand
-        }
-
-        this.BotOff()
-	OverlayHandler.UpdateOverLay()
-	return
-    }
-
-    BotOff() {
-        this.IsOn := false
-	this.TotalElapsedTime += A_TickCount - this.BotStartedAt
-	OverlayHandler.UpdateOverLay()
-        return
     }
 
     GetTotalTime() {

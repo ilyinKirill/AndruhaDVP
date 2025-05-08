@@ -124,8 +124,13 @@ F10::
 return
 
 F11::
-    ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
-    BotHandler.BotOn()
+    ;ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
+    ;BotHandler.BotOn()
+    BotHandler.BotOnChatCommands()
+return
+
++F11::
+    BotHandler.BotOff()
 return
 
 F12::
@@ -145,10 +150,7 @@ return
 return
 
 ^SC029::
-    targetCommand := "/target " . MainAssist
-    ChatHandler.SendChatCommand(targetCommand)
-    Sleep, 50
-    ChatHandler.SendChatCommand("/assist")
+    ChatHandler.SingleAssist()
 return
 
 +F12::
@@ -196,18 +198,35 @@ class BotHandler {
         OverlayHandler.UpdateOverLay()
 
 	while (!ControlHandler.IsManual()) {
+	    Send, {Click Right}
+	    Sleep, this.TimeoutPerClick
+	    Send, {Click Right}
+	    
 	    Random, rand, this.MinTimeout, this.MaxTimeout
 	    Sleep, rand
-
-	    if (!ControlHandler.IsManual()) {
-	        Send, {Click Right}
-	        Sleep, this.TimeoutPerClick
-	        Send, {Click Right}
-	    }
         }
 
         this.BotOff()
         SetTimer, UseSkill, Off
+	OverlayHandler.UpdateOverLay()
+	return
+    }
+
+    BotOnChatCommands() {
+	this.IsOn := true
+	this.BotStartedAt := A_TickCount
+        SetTimer, UseSkill, On
+        OverlayHandler.UpdateOverLay()
+
+	while (this.IsOn) {
+	    ChatHandler.AssistAttack()
+	    Random, rand, this.MinTimeout, this.MaxTimeout
+	    Sleep, rand
+        }
+
+        this.BotOff()
+        SetTimer, UseSkill, Off
+	OverlayHandler.UpdateOverLay()
 	return
     }
 
@@ -405,6 +424,22 @@ class ChatHandler {
         Send, {Enter}
         SendInput, % ShoutMessage
         Send, {Enter}
+    }
+
+    SingleAssist() {
+        targetCommand := "/target " . MainAssist
+        ChatHandler.SendChatCommand(targetCommand)
+        Sleep, 50
+        ChatHandler.SendChatCommand("/assist")
+    }
+
+    AssistAttack() {
+        targetCommand := "/target " . MainAssist
+        ChatHandler.SendChatCommand(targetCommand)
+        Sleep, 50
+        ChatHandler.SendChatCommand("/assist")
+        Sleep, 100
+        ChatHandler.SendChatCommand("/attack")
     }
 
     SendChatCommand(command) {

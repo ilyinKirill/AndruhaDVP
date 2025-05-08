@@ -105,6 +105,7 @@ F7::
     SkillPanelHandler.SecondPanelShortcut(A_ThisHotkey)
 return
 
+
 F8::
     SkillPanelHandler.SecondPanelShortcutSingle(A_ThisHotkey)
 return
@@ -199,6 +200,11 @@ class BotHandler {
     }
 
     Assist() {
+	if (!this.IsOn) {
+	    SetTimer, BotAssist, Off
+	    return
+	}
+
         ChatHandler.AssistAttack()
 	Random, nextAssist, this.MinTimeout, this.MaxTimeout
 	SetTimer, BotAssist, %nextAssist%
@@ -410,9 +416,9 @@ class ChatHandler {
     AssistAttack() {
         targetCommand := "/target " . MainAssist
         ChatHandler.SendChatCommand(targetCommand)
-        Sleep, 50
+        Sleep, 150
         ChatHandler.SendChatCommand("/assist")
-        Sleep, 100
+        Sleep, 150
         ChatHandler.SendChatCommand("/attack")
     }
 

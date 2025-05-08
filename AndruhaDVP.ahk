@@ -20,10 +20,8 @@ OverlayHandler := new OverlayHandler()
 WinTitle := "Lineage II"
 PreviousWinState := WinActive(WinTitle)
 CheckWinStateIsRunning := 0
-SkillHotKey := 3
 
 CheckWindowStatePeriod := 50
-UseSkillPeriod := 15*1000
 UpdateOverLayPeriod := 1000
 
 ; ========================
@@ -32,13 +30,15 @@ UpdateOverLayPeriod := 1000
 
 SetTimer, CheckWindowState, %CheckWindowStatePeriod%
 SetTimer, UpdateOverLay, %UpdateOverLayPeriod%
-SetTimer, UseSkill, %UseSkillPeriod%
-SetTimer, UseSkill, Off
 return
 
 ; ========================
 ; Region: Labels
 ; ========================
+
+BotAssist:
+    BotHandler.Assist()
+return
 
 CheckWindowState:
     if (CheckWinStateIsRunning)
@@ -63,12 +63,6 @@ CheckWindowState:
     }
 
     CheckWinStateIsRunning := 0
-return
-
-UseSkill:
-    if (BotHandler.IsOn) {
-        Send, {%SkillHotKey%}
-    }
 return
 
 UpdateOverLay:
@@ -124,13 +118,11 @@ F10::
 return
 
 F11::
-    ;ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
-    ;BotHandler.BotOn()
-    BotHandler.BotOnChatCommands()
+    BotHandler.Toogle()
 return
 
 +F11::
-    BotHandler.BotOff()
+    ChatHandler.GetMainAssistFromUser()
 return
 
 F12::
@@ -191,31 +183,38 @@ class BotHandler {
     TotalElapsedTime := 0
     BotStartedAt := 0
 
-    BotOn() {
+    Toogle() {
+	if (this.IsOn) {
+	    this.Stop()
+	}
+	else {
+	    this.Start()
+	}
+    }
+
+    Start() {
 	this.IsOn := true
 	this.BotStartedAt := A_TickCount
-        SetTimer, UseSkill, On
-        OverlayHandler.UpdateOverLay()
-
-	while (!ControlHandler.IsManual()) {
-	    Send, {Click Right}
-	    Sleep, this.TimeoutPerClick
-	    Send, {Click Right}
-	    
-	    Random, rand, this.MinTimeout, this.MaxTimeout
-	    Sleep, rand
-        }
-
-        this.BotOff()
-        SetTimer, UseSkill, Off
 	OverlayHandler.UpdateOverLay()
-	return
+	SetTimer, BotAssist, 1
+    }
+
+    Assist() {
+        ChatHandler.AssistAttack()
+	Random, nextAssist, this.MinTimeout, this.MaxTimeout
+	SetTimer, BotAssist, %nextAssist%
+    }
+
+    Stop() {
+	SetTimer, BotAssist, Off
+	this.IsOn := false
+	this.TotalElapsedTime += A_TickCount - this.BotStartedAt
+	OverlayHandler.UpdateOverLay()
     }
 
     BotOnChatCommands() {
 	this.IsOn := true
 	this.BotStartedAt := A_TickCount
-        SetTimer, UseSkill, On
         OverlayHandler.UpdateOverLay()
 
 	while (this.IsOn) {
@@ -225,7 +224,6 @@ class BotHandler {
         }
 
         this.BotOff()
-        SetTimer, UseSkill, Off
 	OverlayHandler.UpdateOverLay()
 	return
     }

@@ -105,7 +105,6 @@ F7::
     SkillPanelHandler.SecondPanelShortcut(A_ThisHotkey)
 return
 
-
 F8::
     SkillPanelHandler.SecondPanelShortcutSingle(A_ThisHotkey)
 return
@@ -408,24 +407,38 @@ class ChatHandler {
 
     SingleAssist() {
         targetCommand := "/target " . MainAssist
-        ChatHandler.SendChatCommand(targetCommand)
+        this.SendChatCommand(targetCommand)
         Sleep, 50
-        ChatHandler.SendChatCommand("/assist")
+        this.SendChatCommand("/assist")
     }
 
     AssistAttack() {
         targetCommand := "/target " . MainAssist
-        ChatHandler.SendChatCommand(targetCommand)
+        this.SendChatCommand(targetCommand)
         Sleep, 150
-        ChatHandler.SendChatCommand("/assist")
+        this.SendChatCommand("/assist")
         Sleep, 150
-        ChatHandler.SendChatCommand("/attack")
+        this.SendChatCommand("/attack")
     }
 
     SendChatCommand(command) {
         Send, {Enter}
         SendInput, %command%
         Send, {Enter}
+    }
+
+    AssistAttackToWindow() {
+        targetCommand := "/target " . MainAssist
+        this.SendChatCommandToWindow(targetCommand)
+        Sleep, 150
+        this.SendChatCommandToWindow("/assist")
+        Sleep, 150
+        this.SendChatCommandToWindow("/attack")
+    }
+
+    SendChatCommandToWindow(command) {
+        windowClass := "ahk_class L2UnrealWWindowsViewportWindow"
+        ControlSend, , {Enter}%command%{Enter}, %WindowClass%
     }
 
     ChatIsInactive() {

@@ -6,23 +6,22 @@
 ; ========================
 
 global ShoutMessage
+global MainAssist
 global Overlay
 global BotStatus
 
 SkillPanelHandler := new SkillPanelHandler()
 BotHandler := new BotHandler()
 ControlHandler := new ControlHandler()
-ShoutHandler := new ShoutHandler()
+ChatHandler := new ChatHandler()
 OverlayHandler := new OverlayHandler()
 
 ;This shit provided by kondr-sugoi
 WinTitle := "Lineage II"
 PreviousWinState := WinActive(WinTitle)
 CheckWinStateIsRunning := 0
-SkillHotKey := 3
 
 CheckWindowStatePeriod := 50
-UseSkillPeriod := 7*1000
 UpdateOverLayPeriod := 1000
 
 ; ========================
@@ -31,13 +30,15 @@ UpdateOverLayPeriod := 1000
 
 SetTimer, CheckWindowState, %CheckWindowStatePeriod%
 SetTimer, UpdateOverLay, %UpdateOverLayPeriod%
-SetTimer, UseSkill, %UseSkillPeriod%
-SetTimer, UseSkill, Off
 return
 
 ; ========================
 ; Region: Labels
 ; ========================
+
+BotAssist:
+    BotHandler.Assist()
+return
 
 CheckWindowState:
     if (CheckWinStateIsRunning)
@@ -48,6 +49,7 @@ CheckWindowState:
         CurrentState := WinActive(WinTitle)
 
         if (CurrentState && !PreviousWinState) {
+            Gui, OverlayGui: Show, NoActivate
             PreviousWinState := 1
             Send, {Home}
             Send, //
@@ -55,17 +57,12 @@ CheckWindowState:
             Send, {Ctrl}
         }
         else if (!CurrentState) {
+            Gui, OverlayGui: Hide
             PreviousWinState := 0
         }
     }
 
     CheckWinStateIsRunning := 0
-return
-
-UseSkill:
-    if (BotHandler.IsOn) {
-        Send, {%SkillHotKey%}
-    }
 return
 
 UpdateOverLay:
@@ -88,70 +85,89 @@ Return
 ; ========================
 
 #MaxThreadsPerHotkey 1
+1::
+2::
+3::
+4::
+5::
+6::
+    SkillPanelHandler.FirstPanelShortcut(A_ThisHotkey)
+return
+
+#MaxThreadsPerHotkey 1
 F1::
-    SkillPanelHandler.SingleShortcutAction(1)
-return
-
-#MaxThreadsPerHotkey 1
 F2::
-    SkillPanelHandler.SingleShortcutAction(2)
-return
-
-#MaxThreadsPerHotkey 1
 F3::
-    SkillPanelHandler.SingleShortcutAction(3)
-return
-
-#MaxThreadsPerHotkey 1
 F4::
-    SkillPanelHandler.SingleShortcutAction(4)
-return
-
-#MaxThreadsPerHotkey 1
 F5::
-    SkillPanelHandler.SingleShortcutAction(5)
-return
-
-#MaxThreadsPerHotkey 1
 F6::
-    SkillPanelHandler.SingleShortcutAction(6)
-return
-
-#MaxThreadsPerHotkey 1
 F7::
-    SkillPanelHandler.SingleShortcutAction(7)
+    SkillPanelHandler.SecondPanelShortcut(A_ThisHotkey)
 return
 
-#MaxThreadsPerHotkey 1
 F8::
-    SkillPanelHandler.SingleShortcutAction(8)
+    SkillPanelHandler.SecondPanelShortcutSingle(A_ThisHotkey)
 return
 
 F9::
-    ShoutHandler.Shout()
+    ChatHandler.Shout()
 return
 
 F10::
-    ShoutHandler.GetMessageFromUser()
+    ChatHandler.GetMessageFromUser()
 return
 
 F11::
-    ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
-    BotHandler.BotOn()
+    BotHandler.Toogle()
+return
+
++F11::
+    ChatHandler.GetMainAssistFromUser()
 return
 
 F12::
-    BotHandler.DoSingleAssist() // Currently redundant functionality
+    SkillPanelHandler.ToogleFuryMode()
+    OverlayHandler.UpdateOverLay()
+Return
+
+~SC029::
+    if (ChatHandler.ChatIsInactive()) {
+        command := "/targetnext"
+        ChatHandler.SendChatCommand(command)
+    }
+return
+
++SC029::
+    ChatHandler.GetMainAssistFromUser()
+return
+
+^SC029::
+    ChatHandler.SingleAssist()
+return
+
++F12::
+    SkillPanelHandler.ToogleSoulshotMode()
+    OverlayHandler.UpdateOverLay()
 Return
 
 Up::
-    ControlHandler.PreviousPosition()
-    OverlayHandler.UpdateOverLay()
+    if (ChatHandler.ChatIsInactive()) {
+        ControlHandler.PreviousPosition()
+        OverlayHandler.UpdateOverLay()
+    }
+    else {
+        Send, {Up}
+    }
 return
 
 Down::
-    ControlHandler.NextPosition()
-    OverlayHandler.UpdateOverLay()
+    if (ChatHandler.ChatIsInactive()) {
+        ControlHandler.NextPosition()
+        OverlayHandler.UpdateOverLay()
+    }
+    else {
+        Send, {Down}
+    }
 return
 
 ; ========================
@@ -163,50 +179,53 @@ class BotHandler {
     IsOn := false
     MinTimeout := 200 ; Min timeout per assist
     MaxTimeout := 2000 ; Max timeout per assist
-    TimeoutPerClick := 50 ; timeout per click
+    TotalElapsedTime := 0
+    BotStartedAt := 0
 
-    BotOn() {
-        this.ShowNotification(this.Name, "Bot on")
+    Toogle() {
+	if (this.IsOn) {
+	    this.Stop()
+	}
+	else {
+	    this.Start()
+	}
+    }
+
+    Start() {
 	this.IsOn := true
-        SetTimer, UseSkill, On
-        OverlayHandler.ResetBotTime()
-        OverlayHandler.SetBeginBotTime()
-        OverlayHandler.SetCurrentBotTime()
-        OverlayHandler.UpdateOverLay()
-
-	while (!ControlHandler.IsManual()) {
-	    Random, rand, this.MinTimeout, this.MaxTimeout
-	    Sleep, rand
-
-	    if (!ControlHandler.IsManual()) {
-	        Send, {Click Right}
-	        Sleep, this.TimeoutPerClick
-	        Send, {Click Right}
-	    }
-        }
-
-        this.BotOff()
-        SetTimer, UseSkill, Off
-        this.ShowNotification(this.Name, "Bot off")
-	return
+	this.BotStartedAt := A_TickCount
+	OverlayHandler.UpdateOverLay()
+	SetTimer, BotAssist, 1
     }
 
-    DoSingleAssist() {
-	MouseGetPos, xpos, ypos
-        ControlHandler.MoveCoursor(ControlHandler.AxisX, ControlHandler.AxisY)
-        Send, {Click Right}
-        Sleep, this.TimeoutPerClick
-        Send, {Click Right}
-        ControlHandler.MoveCoursor(xpos, ypos)
+    Assist() {
+	if (!this.IsOn) {
+	    SetTimer, BotAssist, Off
+	    return
+	}
+
+        ChatHandler.AssistAttack()
+	Random, nextAssist, this.MinTimeout, this.MaxTimeout
+	SetTimer, BotAssist, %nextAssist%
     }
 
-    BotOff() {
-        this.IsOn := false
-        return
+    Stop() {
+	SetTimer, BotAssist, Off
+	this.IsOn := false
+	this.TotalElapsedTime += A_TickCount - this.BotStartedAt
+	OverlayHandler.UpdateOverLay()
     }
-    
-    ShowNotification(title, text) {
-        TrayTip, %title%, %text%, 2, 2
+
+    GetTotalTime() {
+	return this.TotalElapsedTime + this.GetCurrentSessionTime()
+    }
+
+    GetCurrentSessionTime() {
+	if (!this.IsOn) {
+	    return 0
+	}
+	sessionTime := A_TickCount - this.BotStartedAt
+        return sessionTime
     }
 }
 
@@ -216,27 +235,16 @@ class ControlHandler {
     SafeZoneX := 40
     SafeZoneY := 15
     MemberDistance := 34
-    MaPosition := 1
 
     NextPosition() {
         this.AxisY := (this.AxisY > 564) ? 598 : this.AxisY += this.MemberDistance
         this.MoveCoursor(this.AxisX, this.AxisY)
-
-        if !(this.MaPosition >= 8) {
-            this.MaPosition += 1
-        }        
-        
         return
     }
 
     PreviousPosition() {
         this.AxisY := (this.AxisY < 394) ? 360 : this.AxisY -= this.MemberDistance
         this.MoveCoursor(this.AxisX, this.AxisY)
-
-        if !(this.MaPosition <= 1) {
-            this.MaPosition -= 1
-        }
-
         return
     }
     
@@ -260,26 +268,91 @@ class SkillPanelHandler {
     LoopIterationTimeout := 50
     FistPanel := "!1"
     SecondPanel := "!2"
-
-    ShortcutAction(shortcut) {
-    	key := "F" . shortcut
+    SoulshotModeEnabled := false
+    SoulshotShortcut := 8
+    AttackShortcut := 2
+    FuryModeEnabled := true
+    FuryShortcut := 0
+    Panel1FuryShortcuts := Array(1, 2, 3, 4, 5)
+    Panel2FuryShortcuts := Array(1, 2, 3, 5, 6, 7, 8)
+    
+    SecondPanelShortcutSingle(key) {
         Send, % this.SecondPanel
-        while GetKeyState(key, "P") {
-            Send, %shortcut%
-            Sleep, % this.LoopIterationTimeout
-        }
+        shortcut := SubStr(key, 2)
+        Send, %shortcut%
         Send, % this.FistPanel
     }
 
-    SingleShortcutAction(shortcut) {
+    FirstPanelShortcut(key) {
+        if (ChatHandler.ChatIsInactive()) {
+    	    this.PanelShortcut(key, key, this.Panel1FuryShortcuts)
+        }
+        else {
+            SendInput, %key%
+        }
+    }
+
+    SecondPanelShortcut(key) {
+    	shortcut := SubStr(key, 2)
+        Send, % this.SecondPanel
+        this.PanelShortcut(shortcut, key, this.Panel2FuryShortcuts)
+        Send, % this.FistPanel
+    }
+
+    PanelShortcut(shortcut, key, furyShortcuts) {
+    	this.UseFury(shortcut, furyShortcuts)
+        while GetKeyState(key, "P") {
+            this.UseSoulshot(key)
+            Send, %shortcut%
+            Sleep, % this.LoopIterationTimeout
+        }
+    	this.UseFury(shortcut, furyShortcuts)
+    }
+
+    SecondPanelSingleShortcut(shortcut) {
         Send, % this.SecondPanel
         Send, %shortcut%
         Send, % this.FistPanel
     }
+
+    UseFury(shortcut, furyShortcuts) {
+    	if (this.FuryEnabled(shortcut, furyShortcuts)) {
+    	    Send, % this.FuryShortcut
+	}
+    }
+
+    UseSoulshot(shortcut) {
+    	if (this.SoulshotEnabled(shortcut)) {
+    	    Send, % this.SoulshotShortcut
+	}
+    }
+
+    FuryEnabled(shortcut, furyShortcuts) {
+	if (!this.FuryModeEnabled) {
+	    return false
+        }
+        for index, value in furyShortcuts {
+            if (value = shortcut) {
+                return true
+            }
+        }
+        return false
+    }
+
+    SoulshotEnabled(shortcut) {
+	return this.SoulshotModeEnabled && this.AttackShortcut = shortcut
+    }
+
+    ToogleFuryMode() {
+        this.FuryModeEnabled := !this.FuryModeEnabled
+    }
+
+    ToogleSoulshotMode() {
+        this.SoulshotModeEnabled := !this.SoulshotModeEnabled
+    }
 }
 
-class ShoutHandler {
-    ShoutTimeout := 2*60*1000
+class ChatHandler {
     GuiBackgroundColor := "242729"
     FontSize := "s12"
     Font := "Arial"
@@ -290,36 +363,97 @@ class ShoutHandler {
         ButtonWidth := 80
         ButtonHeight := 23
         SubmitButtonX := 50
-        SubmitButtonY := 50
+        SubmitButtonY := 90
         CancelButtonX := 170
-        CancelButtonY := 50
+        CancelButtonY := 90
 
         Gui, ShoutGui: New, +AlwaysOnTop -Caption +ToolWindow
         Gui, ShoutGui: Color, % this.GuiBackgroundColor
         Gui, ShoutGui: Font, % this.FontSize, % this.Font
+        Gui, ShoutGui: Add, Text, w%InputControlWidth% h%InputControlHeight% cFFFFFF, Shout Message:
         Gui, ShoutGui: Add, Edit, vShoutMessage w%InputControlWidth% h%InputControlHeight%
         Gui, ShoutGui: Add, Button, w%ButtonWidth% h%ButtonHeight% gSubmit x%SubmitButtonX% y%SubmitButtonY% +Center, Submit
         Gui, ShoutGui: Add, Button, w%ButtonWidth% h%ButtonHeight% gCancel x%CancelButtonX% y%CancelButtonY% +Center, Cancel
+
+        Gui, MaGui: New, +AlwaysOnTop -Caption +ToolWindow
+        Gui, MaGui: Color, % this.GuiBackgroundColor
+        Gui, MaGui: Font, % this.FontSize, % this.Font
+        Gui, MaGui: Add, Text, w%InputControlWidth% h%InputControlHeight% cFFFFFF, Main Assist Nickname:
+        Gui, MaGui: Add, Edit, vMainAssist w%InputControlWidth% h%InputControlHeight%
+        Gui, MaGui: Add, Button, w%ButtonWidth% h%ButtonHeight% gSubmit x%SubmitButtonX% y%SubmitButtonY% +Center, Submit
+        Gui, MaGui: Add, Button, w%ButtonWidth% h%ButtonHeight% gCancel x%CancelButtonX% y%CancelButtonY% +Center, Cancel
     }
 
     GetMessageFromUser() {
         GuiWidth := 300
-        GuiHeight := 100
+        GuiHeight := 130
 
         Gui, ShoutGui: Show, w%GuiWidth% h%GuiHeight%, Shout Window
     }
 
-    Shout(){
+    GetMainAssistFromUser() {
+        GuiWidth := 300
+        GuiHeight := 130
+
+        Gui, MaGui: Show, w%GuiWidth% h%GuiHeight%, Main Assist Window
+    }
+
+    Shout() {
         GuiControlGet, ShoutMessage,, ShoutMessage
         Send, {Enter}
-        SendRaw, % ShoutMessage
+        SendInput, % ShoutMessage
         Send, {Enter}
+    }
+
+    SingleAssist() {
+        targetCommand := "/target " . MainAssist
+        this.SendChatCommand(targetCommand)
+        Sleep, 50
+        this.SendChatCommand("/assist")
+    }
+
+    AssistAttack() {
+        if (this.MobIsDead()) {
+            targetCommand := "/target " . MainAssist
+            this.SendChatCommand(targetCommand)
+            Sleep, 150
+            this.SendChatCommand("/assist")
+            Sleep, 150
+            this.SendChatCommand("/attack")
+        }
+    }
+
+    SendChatCommand(command) {
+        SendInput, {Enter}%command%{Enter}
+    }
+
+    AssistAttackToWindow() {
+        targetCommand := "target " . MainAssist
+        this.SendChatCommandToWindow(targetCommand)
+        Sleep, 150
+        this.SendChatCommandToWindow("assist")
+        Sleep, 150
+        this.SendChatCommandToWindow("attack")
+    }
+
+    SendChatCommandToWindow(command) {
+	command := Chr(47) . command
+        windowClass := "ahk_class L2UnrealWWindowsViewportWindow"
+        ControlSend, , {Enter}%command%{Enter}, %WindowClass%
+    }
+
+    ChatIsInactive() {
+        PixelGetColor, color, 46, 1426
+        return color = 0x1E1D1E
+    }
+
+    MobIsDead() {
+        PixelGetColor, color, 1212, 21
+        return color != 0x2100CE
     }
 }
 
 class OverlayHandler {
-    BeginBotTime := 0
-    CurrentBotTime := 0
 
     __New() {     
         FontSize := 17
@@ -345,17 +479,6 @@ class OverlayHandler {
         this.UpdateOverLay()
     }
 
-    SetBeginBotTime() {
-        this.BeginBotTime := A_TickCount
-    }
-
-    SetCurrentBotTime() {
-        if (BotHandler.IsOn){
-            this.CurrentBotTime := A_TickCount
-            result := this.CurrentBotTime - this.BeginBotTime
-        }
-    }
-
     GetCurrentTime(){
         FormatTime, currentTime, , HH:mm
         return currentTime
@@ -364,28 +487,34 @@ class OverlayHandler {
     GetTimeInFormat(timeInMs) {
         seconds := Floor(timeInMs // 1000)
         minutes := seconds // 60
+        hours := minutes // 60
         remainingSeconds := Mod(seconds, 60)
+        remainingMinutes := Mod(minutes, 60)
     
-        FormattedMinutes := Format("{:02}", minutes)
         FormattedSeconds := Format("{:02}", remainingSeconds)
+        FormattedMinutes := Format("{:02}", remainingMinutes)
+        FormattedHours := Format("{:02}", hours)
     
-        return FormattedMinutes . ":" . FormattedSeconds
+        return FormattedHours . ":" . FormattedMinutes . ":" . FormattedSeconds
     }
 
     UpdateOverLay() {
-        this.UpdateOverlayInfo(BotHandler.IsOn, this.GetTimeInFormat(this.CurrentBotTime - this.BeginBotTime), this.GetCurrentTime(), ControlHandler.MaPosition)
+        this.UpdateOverlayInfo(BotHandler.IsOn, SkillPanelHandler.FuryModeEnabled, SkillPanelHandler.SoulshotModeEnabled, this.GetTimeInFormat(BotHandler.GetTotalTime()), this.GetCurrentTime())
     }
 
-    UpdateOverlayInfo(isBotOn, elapsedTime, currentTime, maPosition){
+    UpdateOverlayInfo(isBotOn, furyMode, soulshotMode, elapsedTime, currentTime) {
         botStatus := (isBotOn ? "ON" : "OFF") 
         botStatusText := BotHandler.Name . " " . A_Tab . botStatus
         botStatusColor := (isBotOn ? "Lime" : "Red")
 
-        elapsedTimeText := "Elapsed time: " . A_Tab . elapsedTime
+	elapsedTimeText := "Elapsed time: " . A_Tab . elapsedTime
         currentTimeText := "Current time: " . A_Tab . currentTime
-        maText := "MA position: " . A_Tab . maPosition
         separatingLine := "---------------------"
-        overlayText := elapsedTimeText . "`n" . maText . "`n" . separatingLine . "`n" . currentTimeText
+
+        furyModeText := "Fury Mode:" . A_Tab . (furyMode ? "ON" : "OFF")
+        soulshotModeText := "Soulshot Mode:" . A_Tab . (soulshotMode ? "ON" : "OFF")
+
+        overlayText := elapsedTimeText  . "`n" . furyModeText . "`n" . soulshotModeText . "`n" .  separatingLine . "`n" . currentTimeText
 
         Gui, OverlayGui:Font, c%botStatusColor% ; Set the new font color
         GuiControl, OverlayGui:Font, BotStatus ; Apply the new font color to the control
@@ -393,9 +522,4 @@ class OverlayHandler {
         GuiControl, OverlayGui:, Overlay, %overlayText% ; Update other overlay text
         return
     }
-
-    ResetBotTime(){
-        this.CurrentBotTime := 0
-        this.BeginBotTime := 0
-    }
-}
+}	

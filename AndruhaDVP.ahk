@@ -413,30 +413,31 @@ class ChatHandler {
     }
 
     AssistAttack() {
-        targetCommand := "/target " . MainAssist
-        this.SendChatCommand(targetCommand)
-        Sleep, 150
-        this.SendChatCommand("/assist")
-        Sleep, 150
-        this.SendChatCommand("/attack")
+        if (this.MobIsDead()) {
+            targetCommand := "/target " . MainAssist
+            this.SendChatCommand(targetCommand)
+            Sleep, 150
+            this.SendChatCommand("/assist")
+            Sleep, 150
+            this.SendChatCommand("/attack")
+        }
     }
 
     SendChatCommand(command) {
-        Send, {Enter}
-        SendInput, %command%
-        Send, {Enter}
+        SendInput, {Enter}%command%{Enter}
     }
 
     AssistAttackToWindow() {
-        targetCommand := "/target " . MainAssist
+        targetCommand := "target " . MainAssist
         this.SendChatCommandToWindow(targetCommand)
         Sleep, 150
-        this.SendChatCommandToWindow("/assist")
+        this.SendChatCommandToWindow("assist")
         Sleep, 150
-        this.SendChatCommandToWindow("/attack")
+        this.SendChatCommandToWindow("attack")
     }
 
     SendChatCommandToWindow(command) {
+	command := Chr(47) . command
         windowClass := "ahk_class L2UnrealWWindowsViewportWindow"
         ControlSend, , {Enter}%command%{Enter}, %WindowClass%
     }
@@ -444,6 +445,11 @@ class ChatHandler {
     ChatIsInactive() {
         PixelGetColor, color, 46, 1426
         return color = 0x1E1D1E
+    }
+
+    MobIsDead() {
+        PixelGetColor, color, 1212, 21
+        return color != 0x2100CE
     }
 }
 
@@ -516,4 +522,4 @@ class OverlayHandler {
         GuiControl, OverlayGui:, Overlay, %overlayText% ; Update other overlay text
         return
     }
-}
+}	
